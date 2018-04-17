@@ -1,4 +1,5 @@
 *~
 *.mat
-!abrviewer_defaults.mat
+mousecallbacktest.m
+*.xmi
 
