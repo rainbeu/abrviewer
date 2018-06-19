@@ -30,7 +30,7 @@ classdef ABRViewerDisplay < ABRViewerBase
     end
     
     properties (Access = public)
-        debug_mode(1, 1) logical = true
+        debug_mode(1, 1) logical = false
     end
     
     methods
@@ -140,6 +140,7 @@ classdef ABRViewerDisplay < ABRViewerBase
                             set(line_handles(nearest_line), 'linewidth', 0.5);
                         end
                     end
+                    self.plot_legend;
                 end
             end
         end
@@ -291,8 +292,17 @@ classdef ABRViewerDisplay < ABRViewerBase
             for k = 1:length(hp)
                 set(hp(k), 'UserData', [idx k], 'Tag', 'ABR', 'Color', cmap(k, :));
             end
-            if ~is_main
-                set(hp, 'linestyle', '-.');
+            if is_main
+                set(hp, 'linestyle', '-');
+            else
+                switch idx
+                    case 1
+                        set(hp, 'linestyle', ':');
+                    case 2
+                        set(hp, 'linestyle', '--');
+                    case 3
+                        set(hp, 'linestyle', '-.');
+                end
             end
             if ~isempty(hp)
                 self.legend_handles = cat(1, self.legend_handles, hp(1));
