@@ -13,6 +13,7 @@ classdef ABRViewerDisplay < ABRViewerBase
         mic_handle
         minfreq_handle
         maxfreq_handle
+        legend_handles
     end
     
     properties (Access = private)
@@ -29,7 +30,7 @@ classdef ABRViewerDisplay < ABRViewerBase
     end
     
     properties (Access = public)
-        debug_mode(1, 1) logical = true
+        debug_mode(1, 1) logical = false
     end
     
     methods
@@ -139,6 +140,7 @@ classdef ABRViewerDisplay < ABRViewerBase
                             set(line_handles(nearest_line), 'linewidth', 0.5);
                         end
                     end
+                    self.plot_legend;
                 end
             end
         end
@@ -253,6 +255,8 @@ classdef ABRViewerDisplay < ABRViewerBase
                     self.plot_marker(idx);
                 end
             end
+            
+            plot_legend(self);
         end
         
     end
@@ -262,6 +266,7 @@ classdef ABRViewerDisplay < ABRViewerBase
         function prepare_plot(self)
             cla(self.axes_handle);
             self.parameters = [];
+            self.legend_handles = [];
             self.max_abr = 0;
             max_mic = 0;
             for idx = 1:length(self.data)
@@ -287,8 +292,20 @@ classdef ABRViewerDisplay < ABRViewerBase
             for k = 1:length(hp)
                 set(hp(k), 'UserData', [idx k], 'Tag', 'ABR', 'Color', cmap(k, :));
             end
-            if ~is_main
-                set(hp, 'linestyle', '-.');
+            if is_main
+                set(hp, 'linestyle', '-');
+            else
+                switch idx
+                    case 1
+                        set(hp, 'linestyle', ':');
+                    case 2
+                        set(hp, 'linestyle', '--');
+                    case 3
+                        set(hp, 'linestyle', '-.');
+                end
+            end
+            if ~isempty(hp)
+                self.legend_handles = cat(1, self.legend_handles, hp(1));
             end
         end
         
@@ -338,6 +355,15 @@ classdef ABRViewerDisplay < ABRViewerBase
                 'color', [0.9 0.9 0.9], 'parent', self.axes_handle);
             text(-1.1, 0.5, '1µV', 'horizontalalignment', 'right', 'verticalalignment', 'bottom', ...
                 'fontsize', 8, 'parent', self.axes_handle);
+        end
+        
+        function plot_legend(self)
+            tmp = regexp({self.data.file_name},'-[0-9]+_([_A-Za-z0-9 ]+).mat','tokens');
+            if length(self.legend_handles) > 1
+                legend(self.legend_handles, cellfun(@(x)x{1},tmp,'UniformOutput',true), 'Interpreter', 'none');
+            else
+                delete(findall(self.figure_handle, 'type', 'legend'));
+            end
         end
         
         function calculate_plot_dimensions(self)
