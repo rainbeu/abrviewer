@@ -103,8 +103,9 @@ classdef ABRData < ExperimentalData
             limits = [min(limits(:)) max(limits(:))];
         end
         
-        function robust_std = get_noise_estimate(self)
-            robust_std = median(abs(self.get_filtered_data/0.6745));
+        function robust_std = get_noise_confidence_int(self)
+            % 95% confidence interval
+            robust_std = 1.96 * median(abs(self.get_filtered_data/0.6745));
         end
         
         function parameters = get_parameters(self)
