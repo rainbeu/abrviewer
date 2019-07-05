@@ -126,7 +126,7 @@ classdef ABRData < ExperimentalData
             self.filter_limits = sort(new_filter_limits);
             min_freq = self.filter_limits(1);
             max_freq = self.filter_limits(2);
-            self.save_to_file;
+            self.save_to_file(-1);
         end
         
         function switch_polarity(self, varargin)
@@ -142,7 +142,11 @@ classdef ABRData < ExperimentalData
                 self.ABR = -self.ABR;
                 self.is_switched = false;
             end
-            self.save_to_file;
+            self.save_to_file(-1);
+        end
+        
+        function polarity_is_switched = is_polarity_switched(self)
+            polarity_is_switched = self.is_switched;
         end
         
         function import_from_file(self, file_path)
@@ -201,7 +205,7 @@ classdef ABRData < ExperimentalData
             
         end
         
-        function save_to_file(self)
+        function save_to_file(self, button_handle)
             % load original data from file into structure and only change
             % additional fields
             rawdata = load(self.file_name);
@@ -215,6 +219,9 @@ classdef ABRData < ExperimentalData
             
             % load full data structure to file (with fields as variables)
             save(self.file_name, '-struct', 'rawdata');
+            if ~isempty(button_handle) && ishandle(button_handle)
+                button_handle.String = 'Save';
+            end
         end
        
         function [peak, location] = find_peak(self, condition, start_point, find_max)
@@ -237,7 +244,7 @@ classdef ABRData < ExperimentalData
             location = locations(idx);
         end
         
-        function set_wave(self, peak, location, condition, number)
+        function set_wave(self, peak, location, condition, number, button_handle)
             % prepare NaNs (otherwise will be filled with zeros)
             self.wave_amp(end+1:condition, :) = NaN;
             self.wave_amp(:, end+1:number) = NaN;
@@ -248,7 +255,7 @@ classdef ABRData < ExperimentalData
             self.wave_amp(condition, number) = peak;
             self.wave_lat(condition, number) = location;
 
-            self.save_to_file;
+            self.save_to_file(button_handle);
         end
         
         function print_data_table(self)
@@ -261,6 +268,14 @@ classdef ABRData < ExperimentalData
                             fprintf('%1.0f;%1.3f;%1.03f;', w, self.wave_amp(k, w), self.wave_lat(k, w));
                         else
                             fprintf(';;;');
+                        end
+                    end
+                    if size(self.wave_amp, 2) >= 4
+                        ratio = self.wave_amp(k, 4)/self.wave_amp(k, 1);
+                        if ~isinf(ratio) && ~isnan(ratio) && ratio ~= 0
+                            fprintf(';4:1;%1.03f;', self.wave_amp(k, 4)/self.wave_lat(k, 1));
+                        else
+                            fprintf(';4:1;;', self.wave_amp(k, 4)/self.wave_lat(k, 1));
                         end
                     end
                     fprintf('\n');
