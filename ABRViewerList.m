@@ -25,12 +25,12 @@ classdef ABRViewerList < ABRViewerBase
     methods
         
         function obj = ABRViewerList
+            % open display window
+            obj.display_window = ABRViewerDisplay;
             % initialize stuff
             obj.load_config_file;
             % populate figure window with data
             obj.new_file_list;
-            % open display window
-            obj.display_window = ABRViewerDisplay;
         end
         
         function delete(obj)
@@ -88,7 +88,15 @@ classdef ABRViewerList < ABRViewerBase
         function load_config_file(self)
             if exist(self.config_file_name, 'file')
                 config = load(self.config_file_name);
-                set(self.path_handle, 'string', config.path_name);
+                if isfield(config, 'path_name')
+                    set(self.path_handle, 'string', config.path_name);
+                end
+                if isfield(config, 'list_position')
+                    self.set_figure_position(config.list_position);
+                end
+                if isfield(config, 'display_position')
+                    self.set_figure_position(config.display_position);
+                end
             else
                 warning('default config file (%s) not found', self.config_file_name);
             end
@@ -96,6 +104,8 @@ classdef ABRViewerList < ABRViewerBase
         
         function save_config_file(self)
             config.path_name = get(self.path_handle, 'string');
+            config.list_position = self.get_figure_position;
+            config.display_position = self.display_window.get_figure_position;
             save(self.config_file_name, '-struct', 'config');
         end
         
