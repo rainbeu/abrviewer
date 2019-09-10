@@ -240,6 +240,7 @@ classdef ABRViewerDisplay < ABRViewerBase
             if ~isempty(data)
                 self.data = data;
                 self.main_entry = main_data;
+                self.frequency_callback;
                 self.update;
                 self.switch_handle.Value = self.data.is_polarity_switched;
             end

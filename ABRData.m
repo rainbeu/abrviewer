@@ -123,7 +123,9 @@ classdef ABRData < ExperimentalData
         end
         
         function [min_freq, max_freq] = set_filter_limits(self, new_filter_limits)
-            self.filter_limits = sort(new_filter_limits);
+            if ~isempty(new_filter_limits)
+                self.filter_limits = sort(new_filter_limits);
+            end
             min_freq = self.filter_limits(1);
             max_freq = self.filter_limits(2);
             self.save_to_file(-1);
@@ -305,11 +307,11 @@ classdef ABRData < ExperimentalData
             elseif R2p > 0.7 && max(CC) > criterion
                 thr = thrp;
             else
-                ps
-                pp
-                RMSs
-                RMSp
-                R2p
+%                 ps
+%                 pp
+%                 RMSs
+%                 RMSp
+%                 R2p
                 thr = nan;
             end
             
