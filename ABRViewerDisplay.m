@@ -290,6 +290,7 @@ classdef ABRViewerDisplay < ABRViewerBase
         end
         
         function plot_abr(self, idx, is_main)
+            self.plot_threshold(idx, is_main);
             params = self.data(idx).get_parameters;
             pos = ismember(self.parameters, params);
             time = self.data(idx).get_time;
@@ -317,6 +318,30 @@ classdef ABRViewerDisplay < ABRViewerBase
                 self.legend_handles = cat(1, self.legend_handles, hp(1));
             end
         end
+        
+        
+        function plot_threshold(self, idx, is_main)
+            params = self.data(idx).get_parameters;
+            pos = ismember(self.parameters, params);
+            time = self.data(idx).get_time;
+            thr =  self.data(idx).estimate_threshold;
+            hl = line(self.axes_handle, [min(time);max(time)]/1e-3, [1;1]*interp1(params, self.offsets(pos), thr), ...
+                     'color', [0.6 0.6 0.6],'linewidth',2);
+            text(self.axes_handle, min(get(self.axes_handle,'XLim'))-1, interp1(params, self.offsets(pos), thr), sprintf('%1.1f', thr));
+            if is_main
+                set(hl, 'linestyle', '-');
+            else
+                switch idx
+                    case 1
+                        set(hl, 'linestyle', ':');
+                    case 2
+                        set(hl, 'linestyle', '--');
+                    case 3
+                        set(hl, 'linestyle', '-.');
+                end
+            end
+        end
+
         
         function plot_marker(self, idx)
             params = self.data(idx).get_parameters;
