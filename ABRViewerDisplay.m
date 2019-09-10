@@ -321,7 +321,8 @@ classdef ABRViewerDisplay < ABRViewerBase
         function plot_marker(self, idx)
             params = self.data(idx).get_parameters;
             pos = find(ismember(self.parameters, params));
-            main_data = self.data(self.main_entry);
+%             main_data = self.data(self.main_entry);
+            main_data = self.data(idx);
             noise_ci = main_data.get_noise_confidence_int;
             for wave_nr = 1:min(size(main_data.wave_amp, 2), size(main_data.wave_lat, 2))
                 n_waveforms = min(size(main_data.wave_amp, 1), size(main_data.wave_lat, 1));
@@ -338,11 +339,19 @@ classdef ABRViewerDisplay < ABRViewerBase
                             set(hl, 'MarkerFaceColor', cmap(cond, :));
                         else
                             set(hl, 'MarkerFaceColor', 'none');
-                        end                            
-                        text(latency, amplitude + 1.5*self.point_offset + self.offsets(pos(cond)), ...
-                            num2str(wave_nr), ...
-                            'color', 'r', 'horizontalalignment', 'center', ...
-                            'verticalalignment', 'bottom', 'parent', self.axes_handle);
+                        end         
+                        switch idx
+                            case 1
+                                set(hl, 'Marker', 'v');
+                                text(latency, amplitude + 1.5*self.point_offset + self.offsets(pos(cond)), ...
+                                    num2str(wave_nr), ...
+                                    'color', 'r', 'horizontalalignment', 'center', ...
+                                    'verticalalignment', 'bottom', 'parent', self.axes_handle);
+                            case 2
+                                set(hl, 'Marker', '+', 'MarkerSize', 8, 'Linewidth', 1.5);
+                            case 3
+                                set(hl, 'Marker', 'x', 'MarkerSize', 8, 'Linewidth', 1.5);
+                        end
                     end
                 end
             end
