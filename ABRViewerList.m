@@ -95,7 +95,7 @@ classdef ABRViewerList < ABRViewerBase
                     self.set_figure_position(config.list_position);
                 end
                 if isfield(config, 'display_position')
-                    self.set_figure_position(config.display_position);
+                    self.display_window.set_figure_position(config.display_position);
                 end
             else
                 warning('default config file (%s) not found', self.config_file_name);
