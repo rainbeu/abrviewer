@@ -11,6 +11,7 @@ classdef ABRViewerDisplay < ABRViewerBase
         switch_handle
         slider_handle
         mic_handle
+        save_handle
         minfreq_handle
         maxfreq_handle
         legend_handles
@@ -66,7 +67,7 @@ classdef ABRViewerDisplay < ABRViewerBase
         
         function create_figure_controls(self)
             self.axes_handle = axes('parent', self.figure_handle);
-            self.switch_handle = uicontrol(self.figure_handle, 'style', 'pushbutton', 'units', 'normalized', ...
+            self.switch_handle = uicontrol(self.figure_handle, 'style', 'togglebutton', 'units', 'normalized', ...
                 'position', [0.025 0.025 0.15 0.05], 'tag', 'switch', 'string', 'switch +/-',...
                 'callback', @(src,evt)self.callback('switch', src, evt), 'value', 1);
             uicontrol(self.figure_handle, 'style', 'pushbutton', 'units', 'normalized', ...
@@ -78,6 +79,9 @@ classdef ABRViewerDisplay < ABRViewerBase
             self.mic_handle = uicontrol(self.figure_handle, 'style', 'togglebutton', 'units', 'normalized', ...
                 'position', [0.025 0.935 0.10 0.05], 'tag', 'mic', 'string', 'Mic on/off',...
                 'callback', @(src,evt)self.callback('miconoff', src, evt), 'value', 0);
+            self.save_handle = uicontrol(self.figure_handle, 'style', 'pushbutton', 'units', 'normalized', ...
+                'position', [0.155 0.935 0.13 0.05], 'tag', 'save', 'string', 'Save',...
+                'callback', @(src,evt)self.callback('save', src, evt));
             uicontrol(self.figure_handle, 'style', 'text', 'units', 'normalized', ...
                 'position', [0.66 0.95 0.04 0.025], 'string', 'Filter:');
             self.minfreq_handle = uicontrol(self.figure_handle, 'style', 'edit', 'units', 'normalized', ...
@@ -140,7 +144,8 @@ classdef ABRViewerDisplay < ABRViewerBase
                             set(line_handles(nearest_line), 'linewidth', 0.5);
                         end
                     end
-                    self.plot_legend;
+                    self.update;
+                    % self.plot_legend;
                 end
             end
         end
@@ -162,6 +167,8 @@ classdef ABRViewerDisplay < ABRViewerBase
                     do_update = true;
                 case 'pdf'
                     self.pdf_callback;
+                case 'save'
+                    self.data(self.main_entry).save_to_file(self.save_handle);
                 otherwise
                     warning('callback %s not yet implemented', command);
             end
@@ -233,7 +240,9 @@ classdef ABRViewerDisplay < ABRViewerBase
             if ~isempty(data)
                 self.data = data;
                 self.main_entry = main_data;
+                self.frequency_callback;
                 self.update;
+                self.switch_handle.Value = self.data.is_polarity_switched;
             end
         end
         
@@ -255,6 +264,7 @@ classdef ABRViewerDisplay < ABRViewerBase
                     self.plot_marker(idx);
                 end
             end
+            self.draw_ratio;
             
             plot_legend(self);
         end
@@ -281,6 +291,7 @@ classdef ABRViewerDisplay < ABRViewerBase
         end
         
         function plot_abr(self, idx, is_main)
+            self.plot_threshold(idx, is_main);
             params = self.data(idx).get_parameters;
             pos = ismember(self.parameters, params);
             time = self.data(idx).get_time;
@@ -309,10 +320,35 @@ classdef ABRViewerDisplay < ABRViewerBase
             end
         end
         
+        
+        function plot_threshold(self, idx, is_main)
+            params = self.data(idx).get_parameters;
+            pos = ismember(self.parameters, params);
+            time = self.data(idx).get_time;
+            thr =  self.data(idx).estimate_threshold;
+            hl = line(self.axes_handle, [min(time);max(time)]/1e-3, [1;1]*interp1(params, self.offsets(pos), thr), ...
+                     'color', [0.6 0.6 0.6],'linewidth',2);
+            text(self.axes_handle, min(get(self.axes_handle,'XLim'))-1, interp1(params, self.offsets(pos), thr), sprintf('%1.1f', thr));
+            if is_main
+                set(hl, 'linestyle', '-');
+            else
+                switch idx
+                    case 1
+                        set(hl, 'linestyle', ':');
+                    case 2
+                        set(hl, 'linestyle', '--');
+                    case 3
+                        set(hl, 'linestyle', '-.');
+                end
+            end
+        end
+
+        
         function plot_marker(self, idx)
             params = self.data(idx).get_parameters;
             pos = find(ismember(self.parameters, params));
-            main_data = self.data(self.main_entry);
+%             main_data = self.data(self.main_entry);
+            main_data = self.data(idx);
             noise_ci = main_data.get_noise_confidence_int;
             for wave_nr = 1:min(size(main_data.wave_amp, 2), size(main_data.wave_lat, 2))
                 n_waveforms = min(size(main_data.wave_amp, 1), size(main_data.wave_lat, 1));
@@ -329,11 +365,35 @@ classdef ABRViewerDisplay < ABRViewerBase
                             set(hl, 'MarkerFaceColor', cmap(cond, :));
                         else
                             set(hl, 'MarkerFaceColor', 'none');
-                        end                            
-                        text(latency, amplitude + 1.5*self.point_offset + self.offsets(pos(cond)), ...
-                            num2str(wave_nr), ...
-                            'color', 'r', 'horizontalalignment', 'center', ...
-                            'verticalalignment', 'bottom', 'parent', self.axes_handle);
+                        end         
+                        switch idx
+                            case 1
+                                set(hl, 'Marker', 'v');
+                                text(latency, amplitude + 1.5*self.point_offset + self.offsets(pos(cond)), ...
+                                    num2str(wave_nr), ...
+                                    'color', 'r', 'horizontalalignment', 'center', ...
+                                    'verticalalignment', 'bottom', 'parent', self.axes_handle);
+                            case 2
+                                set(hl, 'Marker', '+', 'MarkerSize', 8, 'Linewidth', 1.5);
+                            case 3
+                                set(hl, 'Marker', 'x', 'MarkerSize', 8, 'Linewidth', 1.5);
+                        end
+                    end
+                end
+            end
+        end
+        
+        function draw_ratio(self)
+            main_data = self.data(self.main_entry);
+            amps = main_data.wave_amp;
+            lats = main_data.wave_lat;
+            for idx = 1:size(amps, 1)
+                if size(amps, 2) >= 4
+                    ratio = amps(idx, 4) ./ amps(idx, 1);
+                    if ~isinf(ratio) && ~isnan(ratio)
+                        text(mean([lats(idx,1), lats(idx,4)]), self.offsets(idx) + amps(idx, 1)/2, sprintf('%1.3f', ratio), ...
+                            'horizontalalignment', 'center', 'verticalalignment', 'bottom', ...
+                            'fontsize', 8, 'parent', self.axes_handle);
                     end
                 end
             end
@@ -387,8 +447,10 @@ classdef ABRViewerDisplay < ABRViewerBase
             cond_idx = cond_idx(wave_idx);
             answer = questdlg('Delete Marker?', 'Question', 'Yes', 'No', 'All', 'No');
             if strcmp(answer, 'Yes')
+                self.save_handle.String = '* Save *';
                 main_data.wave_lat(cond_idx, wave_idx) = NaN;
                 main_data.wave_amp(cond_idx, wave_idx) = NaN;
+                main_data.save_to_file(self.save_handle);
             elseif strcmp(answer, 'All')
                 main_data.wave_lat(:, :) = NaN;
                 main_data.wave_amp(:, :) = NaN;
@@ -420,7 +482,8 @@ classdef ABRViewerDisplay < ABRViewerBase
                                 if self.debug_mode
                                     fprintf('idx: %1.0f, number: %1.0f, wave_number: %1.0f, peak: %1.1f, location: %1.1f\n', line_number, wave_number, peak, location);
                                 end
-                                self.data(line_number(1)).set_wave(peak, location, line_number(2), wave_number);
+                                self.save_handle.String = '* Save *';
+                                self.data(line_number(1)).set_wave(peak, location, line_number(2), wave_number, self.save_handle);
                             end
                             line_number(2) = line_number(2) - 1;
                             if line_number(2) > 0

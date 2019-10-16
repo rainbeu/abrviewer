@@ -123,10 +123,12 @@ classdef ABRData < ExperimentalData
         end
         
         function [min_freq, max_freq] = set_filter_limits(self, new_filter_limits)
-            self.filter_limits = sort(new_filter_limits);
+            if ~isempty(new_filter_limits)
+                self.filter_limits = sort(new_filter_limits);
+            end
             min_freq = self.filter_limits(1);
             max_freq = self.filter_limits(2);
-            self.save_to_file;
+            self.save_to_file(-1);
         end
         
         function switch_polarity(self, varargin)
@@ -142,7 +144,11 @@ classdef ABRData < ExperimentalData
                 self.ABR = -self.ABR;
                 self.is_switched = false;
             end
-            self.save_to_file;
+            self.save_to_file(-1);
+        end
+        
+        function polarity_is_switched = is_polarity_switched(self)
+            polarity_is_switched = self.is_switched;
         end
         
         function import_from_file(self, file_path)
@@ -202,7 +208,7 @@ classdef ABRData < ExperimentalData
             
         end
         
-        function save_to_file(self)
+        function save_to_file(self, button_handle)
             % load original data from file into structure and only change
             % additional fields
             rawdata = load(self.file_name);
@@ -216,6 +222,9 @@ classdef ABRData < ExperimentalData
             
             % load full data structure to file (with fields as variables)
             save(self.file_name, '-struct', 'rawdata');
+            if ~isempty(button_handle) && ishandle(button_handle)
+                button_handle.String = 'Save';
+            end
         end
        
         function [peak, location] = find_peak(self, condition, start_point, find_max)
@@ -238,7 +247,78 @@ classdef ABRData < ExperimentalData
             location = locations(idx);
         end
         
-        function set_wave(self, peak, location, condition, number)
+        function thr = estimate_threshold(self)
+            %%%% hier heftig aufräumen!!!
+            criterion = 0.35;
+            time_limits = [0.5 3.5e-3];
+            
+            waveforms = self.get_filtered_data;
+            idx = self.time >min(time_limits) & self.time < max(time_limits);
+            XC = zeros(2*sum(idx)-1, size(waveforms,2)-1);
+            for k = 1:size(waveforms ,2)-1
+%                 CC(k,1) = corr(waveforms(idx,k+1),waveforms(idx,k));
+                [XC(:,k), lg] = xcorr(waveforms(idx,k+1),waveforms(idx,k),'coeff');
+            end
+            t = lg/self.fs;
+            CC = max(-1,max(XC(abs(t)<=0.2e-3,:))).';
+            
+            L = self.get_parameters;
+            L = L(1:end-1);
+            L = L(:);
+            
+            ps = lsqcurvefit(@(p,x)p(1)+(p(2)-p(1))./(1+10.^(p(4)*(p(3)-x))),...
+                            [0 1 50 0.1],...
+                            L,...
+                            CC,...
+                            [0 criterion min(L) 0.005],...
+                            [criterion 1 max(L) 0.999],...
+                            optimset('Display','none'));
+            pp = lsqcurvefit(@(p,x)p(1)*x.^p(2)+p(3),...
+                            [1 1 0],...
+                            L,...
+                            CC,...
+                            [0 0 -inf],...
+                            [inf inf inf],...
+                            optimset('Display','none'));
+                        
+            fit_sigm = ps(1)+(ps(2)-ps(1))./(1+10.^(ps(4)*(ps(3)-L)));
+            fit_power = pp(1)*L.^pp(2)+pp(3);
+            
+            RMSs = rms(fit_sigm-CC);
+            RMSp = rms(fit_power-CC);
+            R2p = corr((fit_power),(CC))^2;
+                        
+            thrs = ps(3)-log10((ps(2)-ps(1))./(criterion-ps(1))-1)/ps(4);
+            thrp = ((criterion-pp(3))/pp(1))^(1/pp(2));
+            
+%             figure
+%             l=(0:100).';
+%             plot(L,CC,'x',...
+%                  l,ps(1)+(ps(2)-ps(1))./(1+10.^(ps(4)*(ps(3)-l))),...
+%                  l,pp(1)*l.^pp(2)+pp(3)...
+%                  )
+%             line([0 thrs thrp;100 thrs thrp],[criterion 0 0;criterion 1 1],'color','k','linestyle','--')
+%             xlim([0 100]);
+%             ylim([0 1]);
+%             pause
+%             close
+            
+            if ps(1) < criterion && ps(2) > criterion && ps(4) > 0.005 && ps(4) < 0.999 && RMSs < RMSp && min(CC) < criterion
+                thr = thrs;
+            elseif R2p > 0.7 && max(CC) > criterion
+                thr = thrp;
+            else
+%                 ps
+%                 pp
+%                 RMSs
+%                 RMSp
+%                 R2p
+                thr = nan;
+            end
+            
+        end        
+        
+        function set_wave(self, peak, location, condition, number, button_handle)
             % prepare NaNs (otherwise will be filled with zeros)
             self.wave_amp(end+1:condition, :) = NaN;
             self.wave_amp(:, end+1:number) = NaN;
@@ -249,7 +329,7 @@ classdef ABRData < ExperimentalData
             self.wave_amp(condition, number) = peak;
             self.wave_lat(condition, number) = location;
 
-            self.save_to_file;
+            self.save_to_file(button_handle);
         end
         
         function print_data_table(self)
@@ -262,6 +342,14 @@ classdef ABRData < ExperimentalData
                             fprintf('%1.0f;%1.3f;%1.03f;', w, self.wave_amp(k, w), self.wave_lat(k, w));
                         else
                             fprintf(';;;');
+                        end
+                    end
+                    if size(self.wave_amp, 2) >= 4
+                        ratio = self.wave_amp(k, 4)/self.wave_amp(k, 1);
+                        if ~isinf(ratio) && ~isnan(ratio) && ratio ~= 0
+                            fprintf(';4:1;%1.03f;', self.wave_amp(k, 4)/self.wave_lat(k, 1));
+                        else
+                            fprintf(';4:1;;', self.wave_amp(k, 4)/self.wave_lat(k, 1));
                         end
                     end
                     fprintf('\n');

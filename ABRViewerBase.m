@@ -45,6 +45,14 @@ classdef ABRViewerBase < handle
             end
         end
         
+        function position = get_figure_position(self)
+            position = self.figure_handle.Position;
+        end
+        
+        function set_figure_position(self, position)
+            self.figure_handle.Position = position;
+        end
+        
     end
     
     methods (Abstract = true, Access = protected)
