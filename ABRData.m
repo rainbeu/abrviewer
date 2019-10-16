@@ -188,7 +188,8 @@ classdef ABRData < ExperimentalData
             
             if isfield(rawdata, 'is_switched')
                 self.is_switched = rawdata.is_switched;
-                self.ABR = -self.ABR;
+                % ignore "data is switched" flag
+                % self.ABR = -self.ABR;
             else
                 self.is_switched = false;
             end
