@@ -164,6 +164,11 @@ classdef ABRViewerDisplay < ABRViewerBase
                     do_update = true;
                 case 'switch'
                     self.switch_data;
+                    if self.switch_handle.Value == 0
+                        self.switch_handle.BackgroundColor = [0.8 1 0.8];
+                    else
+                        self.switch_handle.BackgroundColor = [1 0.8 0.8];
+                    end
                     do_update = true;
                 case 'pdf'
                     self.pdf_callback;
