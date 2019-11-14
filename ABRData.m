@@ -347,9 +347,9 @@ classdef ABRData < ExperimentalData
                     if size(self.wave_amp, 2) >= 4
                         ratio = self.wave_amp(k, 4)/self.wave_amp(k, 1);
                         if ~isinf(ratio) && ~isnan(ratio) && ratio ~= 0
-                            fprintf(';4:1;%1.03f;', self.wave_amp(k, 4)/self.wave_lat(k, 1));
+                            fprintf(';4:1;%1.03f;', ratio);
                         else
-                            fprintf(';4:1;;', self.wave_amp(k, 4)/self.wave_lat(k, 1));
+                            fprintf(';4:1;;');
                         end
                     end
                     fprintf('\n');
