@@ -160,13 +160,18 @@ classdef ABRData < ExperimentalData
             
             assert(isstruct(rawdata), 'no data found in data file %s!', file_path);
             assert(all(isfield(rawdata, {'St', 'Avg', 'Mic'})), 'data not valid in data file %s!', file_path);
-            assert(all(isfield(rawdata.St, {'StimulusLevelOffsets'})), 'data not valid in data file %s!', file_path);
+            if isfield(rawdata.St, {'StimulusLevelOffsets'})
+                assert(all(isfield(rawdata.St, {'StimulusLevelOffsets'})), 'data not valid in data file %s!', file_path);
+                % main parameter: level range
+                self.parameters = rawdata.St.StimulusLevelOffsets;
+            else 
+                assert(all(isfield(rawdata.St, {'LevelThreshold'})), 'data not valid in data file %s!', file_path);
+                % main parameter: level range
+                self.parameters = rawdata.St.Level + rawdata.St.ILD;
+            end
             
             % constant parameters
             self.fs = rawdata.St.Fs;
-            
-            % main parameter: level range
-            self.parameters = rawdata.St.StimulusLevelOffsets;
             
             % main data
             self.ABR = rawdata.Avg(:, 1:length(self.parameters));
