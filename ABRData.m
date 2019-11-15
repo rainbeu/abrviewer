@@ -131,18 +131,16 @@ classdef ABRData < ExperimentalData
             self.save_to_file(-1);
         end
         
-        function switch_polarity(self, varargin)
-            polarity = -1;
-            if ~isempty(varargin)
-                polarity = sign(varargin{1});
-            end
-            if ~self.polarity_switched && polarity < 0
+        function set_polarity(self, switch_state)
+            if self.is_switched ~= switch_state
                 self.ABR = -self.ABR;
-                self.is_switched = true;
+%                 fprintf('DEBUG: data switched now\n');
             end
-            if self.polarity_switched && polarity > 0
-                self.ABR = -self.ABR;
-                self.is_switched = false;
+            self.is_switched = switch_state;
+            if self.is_switched
+%                 fprintf('DEBUG: data in switched state now\n');
+            else
+%                 fprintf('DEBUG: data in unswitched state now\n');
             end
             self.save_to_file(-1);
         end
@@ -197,19 +195,24 @@ classdef ABRData < ExperimentalData
                 self.filter_limits = [300 3000];
             end
             
-            if isfield(rawdata, 'is_switched')
-                self.is_switched = rawdata.is_switched;
-                % ignore "data is switched" flag
-                % self.ABR = -self.ABR;
-            else
-                self.is_switched = false;
-            end
-            
             % processed
             self.time = (0:size(self.ABR, 1)-1).'/self.fs;
             self.time = self.time - rawdata.Rc.PreTime;
             
             self.set_data_valid(file_path);
+            
+            self.is_switched = false;
+            if isfield(rawdata, 'is_switched')
+                if rawdata.is_switched
+%                     fprintf('DEBUG: data needs switching\n');
+                else
+%                     fprintf('DEBUG: data doesn''t need switching\n');
+                end
+                self.set_polarity(rawdata.is_switched);
+                self.is_switched = rawdata.is_switched;
+            else
+%                 fprintf('DEBUG: data was never switched\n');
+            end            
             
         end
         

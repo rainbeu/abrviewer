@@ -69,7 +69,7 @@ classdef ABRViewerDisplay < ABRViewerBase
             self.axes_handle = axes('parent', self.figure_handle);
             self.switch_handle = uicontrol(self.figure_handle, 'style', 'togglebutton', 'units', 'normalized', ...
                 'position', [0.025 0.025 0.15 0.05], 'tag', 'switch', 'string', 'switch +/-',...
-                'callback', @(src,evt)self.callback('switch', src, evt), 'value', 1);
+                'callback', @(src,evt)self.callback('switch', src, evt), 'value', 0);
             uicontrol(self.figure_handle, 'style', 'pushbutton', 'units', 'normalized', ...
                 'position', [0.825 0.025 0.15 0.05], 'tag', 'pdf', 'string', 'PDF',...
                 'callback', @(src,evt)self.callback('pdf', src, evt));
@@ -164,11 +164,6 @@ classdef ABRViewerDisplay < ABRViewerBase
                     do_update = true;
                 case 'switch'
                     self.switch_data;
-                    if self.switch_handle.Value == 0
-                        self.switch_handle.BackgroundColor = [0.8 1 0.8];
-                    else
-                        self.switch_handle.BackgroundColor = [1 0.8 0.8];
-                    end
                     do_update = true;
                 case 'pdf'
                     self.pdf_callback;
@@ -248,6 +243,7 @@ classdef ABRViewerDisplay < ABRViewerBase
                 self.frequency_callback;
                 self.update;
                 self.switch_handle.Value = self.data.is_polarity_switched;
+                self.update_switch_state;
             end
         end
         
@@ -504,14 +500,26 @@ classdef ABRViewerDisplay < ABRViewerBase
     
     methods (Access = private)
         
+        function update_switch_state(self)
+            if self.switch_handle.Value == 0
+                self.switch_handle.BackgroundColor = [0.8 1 0.8];
+            else
+                self.switch_handle.BackgroundColor = [1 0.8 0.8];
+            end
+%             fprintf('DEBUG: switch color updated\n');
+        end
+        
         function switch_is_on = switch_is_on(self)
-            switch_is_on = get(self.switch_handle, 'Value');
+            switch_is_on = get(self.switch_handle, 'Value') ~= 0;
         end
         
         function switch_data(self)
+            state = self.switch_is_on;
             for idx = 1:length(self.data)
-                self.data(idx).switch_polarity;
+                self.data(idx).set_polarity(state);
+%                 fprintf('DEBUG: data %1.0f switched\n', idx);
             end
+            self.update_switch_state;
         end
         
     end
