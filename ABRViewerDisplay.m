@@ -60,7 +60,7 @@ classdef ABRViewerDisplay < ABRViewerBase
         
         function the_handle = create_figure_window(self)
             the_handle = figure('tag', 'ABR viewer', 'units', 'characters', ...
-                'position', [330.14  11.125  126.71  62.312], 'menubar', 'none',  ...
+                'position', [-167    12   148    43], 'menubar', 'none',  ...
                 'WindowButtonDownFcn', @(src, evt)self.mouse_click_callback(src, evt), ...
                 'name', 'ABR Display');
         end
@@ -164,6 +164,11 @@ classdef ABRViewerDisplay < ABRViewerBase
                     do_update = true;
                 case 'switch'
                     self.switch_data;
+                    if self.switch_handle.Value == 0
+                        self.switch_handle.BackgroundColor = [0.8 1 0.8];
+                    else
+                        self.switch_handle.BackgroundColor = [1 0.8 0.8];
+                    end
                     do_update = true;
                 case 'pdf'
                     self.pdf_callback;
