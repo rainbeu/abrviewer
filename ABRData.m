@@ -290,7 +290,8 @@ classdef ABRData < ExperimentalData
         function thr = estimate_threshold(self)
             %%%% hier heftig aufräumen!!!
             criterion = 0.35;
-            time_limits = [0.5 3.5e-3];
+%             time_limits = [0.5e-3 3.5e-3];
+            time_limits = [0e-3 5e-3];
             
             waveforms = self.get_filtered_data;
             idx = self.time >min(time_limits) & self.time < max(time_limits);
@@ -300,7 +301,7 @@ classdef ABRData < ExperimentalData
                 [XC(:,k), lg] = xcorr(waveforms(idx,k+1),waveforms(idx,k),'coeff');
             end
             t = lg/self.fs;
-            CC = max(-1,max(XC(abs(t)<=0.2e-3,:))).';
+            CC = max(-1,max(XC(t>=-0.4e-3&t<=0e-3,:))).';
             
             L = self.get_parameters;
             L = L(1:end-1);
