@@ -227,6 +227,9 @@ classdef ABRData < ExperimentalData
             % processed
             self.time = (0:size(self.ABR, 1)-1).'/self.fs;
             self.time = self.time - rawdata.Rc.PreTime;
+            % find actual stimulus energy maximum instead of relying on saved position
+%             [~, smp] = max(max(abs(hilbert(self.Mic)),[],2));
+%             self.time = self.time - smp/self.fs;
             
             self.set_data_valid(file_path);
             
