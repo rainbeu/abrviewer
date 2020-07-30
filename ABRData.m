@@ -333,14 +333,23 @@ classdef ABRData < ExperimentalData
             thrp = ((criterion-pp(3))/pp(1))^(1/pp(2));
             
 %             figure
+%             subplot(1,5,[1 2 3 4]);
+%             plot(self.time, waveforms+(0:size(self.ABR,2)-1), self.time, 0.5*self.Mic./max(abs(self.Mic))+(0:size(self.ABR,2)-1));
+%             set(gca,'ytick',(0:size(self.ABR,2)-1),'YTickLabel', L);
+%             ylim([-1 size(self.ABR,2)]);
+%             line([1;1]*time_limits, [-1;size(self.ABR,2)],'color','k');
+%             xlim([-0.004 0.015]);
+%             grid on
+%             subplot(1,5,5);
 %             l=(0:100).';
-%             plot(L,CC,'x',...
-%                  l,ps(1)+(ps(2)-ps(1))./(1+10.^(ps(4)*(ps(3)-l))),...
-%                  l,pp(1)*l.^pp(2)+pp(3)...
+%             plot(CC,L,'x',...
+%                  ps(1)+(ps(2)-ps(1))./(1+10.^(ps(4)*(ps(3)-l))),l,...
+%                  pp(1)*l.^pp(2)+pp(3),l...
 %                  )
-%             line([0 thrs thrp;100 thrs thrp],[criterion 0 0;criterion 1 1],'color','k','linestyle','--')
-%             xlim([0 100]);
-%             ylim([0 1]);
+%             line([criterion 0 0;criterion 1 1],[0 thrs thrp;100 thrs thrp],'color','k','linestyle','--')
+%             ylim([min(L)-10 max(L)+10]);
+%             xlim([0 1]);
+%             grid on
 %             pause
 %             close
             
