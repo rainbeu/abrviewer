@@ -8,7 +8,7 @@ classdef ABRData < ExperimentalData
         wave_lat
     end
     
-    properties (Access = protected)
+    properties (Access = public)
         ABR
         Mic
         time
@@ -27,6 +27,9 @@ classdef ABRData < ExperimentalData
         filter_order(1, 1) double = 512
         filter_limits(1, 2) double = [300 3000]
         filter_type(1, :) char = 'FIR'
+        filter_method(1, :) char = 'lowess'
+        filter_detrend(1, 1) logical = false
+        filter_detrend_order(1, 1) double = 2
     end
     
     properties (Access = private, Constant = true)
@@ -67,6 +70,27 @@ classdef ABRData < ExperimentalData
             end
         end
         
+        function set.filter_method(self, method)
+            if ~strcmpi(method, self.filter_method)
+                self.filter_method = method;
+                self.filter_updated = true; %#ok<MCSUP>
+            end
+        end
+    
+        function set.filter_detrend(self, detrend)
+            if ~strcmpi(detrend, self.filter_detrend)
+                self.filter_detrend = detrend;
+                self.filter_updated = true; %#ok<MCSUP>
+            end
+        end
+        
+        function set.filter_detrend_order(self, detrend_order)
+            if detrend_order ~= self.filter_detrend_order
+                self.filter_detrend_order = detrend_order;
+                self.filter_updated = true; %#ok<MCSUP>
+            end
+        end
+        
     end
     
     methods (Access = public)
@@ -85,6 +109,11 @@ classdef ABRData < ExperimentalData
                         gd = grpdelay(sos, [self.filter_limits(1) exp(mean(log(self.filter_limits))) self.filter_limits(2)], 48000);
                         self.filtered_data = sosfilt(sos, [self.ABR; zeros(round(mean(gd)), size(self.ABR, 2))]);
                         self.filtered_data = self.filtered_data(round(mean(gd))+(1:size(self.ABR, 1)), :);
+                    case 'SMOOTH'
+                        self.filtered_data = smoothdata(self.ABR, self.filter_method, self.filter_order);
+                end
+                if self.filter_detrend
+                    self.filtered_data = detrend(self.filtered_data, self.filter_detrend_order);
                 end
             end
             data = self.filtered_data;
