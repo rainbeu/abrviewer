@@ -364,7 +364,18 @@ classdef ABRData < ExperimentalData
 %                 RMSp
 %                 R2p
                 thr = nan;
+                % or find the threshold by 
+                pre = find(CC<criterion, 1, 'last');
+                if pre == length(L)
+                    thr = max(L)+10;
+                elseif isempty(pre)
+                    thr = min(L)-10;
+                else
+                    thr = interp1(CC(pre:pre+1),L(pre:pre+1),criterion);
+                end                
             end
+            
+            thr = min(max(L)+10, max(min(L)-10, thr));
             
         end        
         
