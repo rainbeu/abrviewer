@@ -14,6 +14,7 @@ classdef ABRViewerList < ABRViewerBase
         previous_handle
         next_handle
         print_handle
+        print_thr_handle
     end
     
     properties (Access = private)
@@ -67,8 +68,11 @@ classdef ABRViewerList < ABRViewerBase
                 'position', [0.75 0.025 0.2 0.1], 'tag', 'next', 'string', '>', ...
                 'callback', @(src,evt)self.next_callback(src, evt));
             self.print_handle = uicontrol(self.figure_handle, 'style', 'pushbutton', 'units', 'normalized', ...
-                'position', [0.30 0.025 0.4 0.1], 'tag', 'next', 'string', 'print list', ...
+                'position', [0.30 0.025 0.4 0.045], 'tag', 'next', 'string', 'print list', ...
                 'callback', @(src,evt)self.print_callback(src, evt));
+            self.print_thr_handle = uicontrol(self.figure_handle, 'style', 'pushbutton', 'units', 'normalized', ...
+                'position', [0.30 0.08 0.4 0.045], 'tag', 'next', 'string', 'print thresholds', ...
+                'callback', @(src,evt)self.print_thr_callback(src, evt));
         end
     end
     
@@ -206,6 +210,30 @@ classdef ABRViewerList < ABRViewerBase
             for idx = 1:length(self.data)
                 self.data(idx).print_data_table;
             end
+        end
+        
+        function print_thr_callback(self, source, event)
+            file_list = self.get_file_list;
+            fprintf('\n\n');
+            fprintf('--- START automatically estimated thresholds ---\n\n');
+            fprintf('%s;%s;%s;%s;%s;%s;%s\n', ...
+                'filename', ...
+                'file date','file time','subject name','side',' stimulus',...
+                'est. ABR threshold');
+            for idx = 1:length(file_list)
+                data = ABRData(fullfile(self.get_path_name, file_list{idx}));
+                thr = data.estimate_threshold;
+                tokens = regexp(file_list{idx}, 'datafile_(\d{4}-\d{2}-\d{2})-(\d{2}-\d{2}-\d{2})[-_]([^_-]+)[-_]([^_-]+)[-_]([^_-]+).*\.mat', 'tokens');
+                if isempty(tokens)
+                    tokens{1}={'','','','',''};
+                end
+                fprintf('%s;%s;%s;%s;%s;%s;%1.1f\n', ...
+                    file_list{idx}, ...
+                    tokens{1}{:},...
+                    thr);
+            end
+            fprintf('\n\n');
+            fprintf('--- END automatically estimated thresholds ---\n\n');
         end
         
         function close_request(self, source, event)
