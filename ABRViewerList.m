@@ -219,7 +219,7 @@ classdef ABRViewerList < ABRViewerBase
             fprintf('%s;%s;%s;%s;%s;%s;%s;%s;%s\n', ...
                 'filename', ...
                 'file date','file time','subject name','side',' stimulus',...
-                'min level','max level','est. ABR threshold');
+                'min level','max level','est. ABR threshold','high/low');
             for idx = 1:length(file_list)
                 data = ABRData(fullfile(self.get_path_name, file_list{idx}));
                 thr = data.estimate_threshold;
@@ -227,11 +227,21 @@ classdef ABRViewerList < ABRViewerBase
                 if isempty(tokens)
                     tokens{1}={'','','','',''};
                 end
-                fprintf('%s;%s;%s;%s;%s;%s;%1.1f;%1.1f;%1.1f\n', ...
+                if isinf(thr)
+                    if thr > 0 
+                        highlow = 'too high';
+                    else
+                        highlow = 'too low';
+                    end
+                    thr = '';
+                else
+                    highlow = '';
+                end
+                fprintf('%s;%s;%s;%s;%s;%s;%1.1f;%1.1f;%1.1f;%s\n', ...
                     file_list{idx}, ...
                     tokens{1}{:},...
                     min(data.get_parameters), max(data.get_parameters), ...
-                    thr);
+                    thr, highlow);
             end
             fprintf('\n\n');
             fprintf('--- END automatically estimated thresholds ---\n\n');
