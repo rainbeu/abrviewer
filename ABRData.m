@@ -367,15 +367,19 @@ classdef ABRData < ExperimentalData
                 % or find the threshold by 
                 pre = find(CC<criterion, 1, 'last');
                 if pre == length(L)
-                    thr = max(L)+10;
+                    thr = +Inf;
                 elseif isempty(pre)
-                    thr = min(L)-10;
+                    thr = -Inf;
                 else
                     thr = interp1(CC(pre:pre+1),L(pre:pre+1),criterion);
                 end                
             end
             
-            thr = min(max(L)+10, max(min(L)-10, thr));
+            if thr < min(self.get_parameters) 
+                thr = -Inf;
+            elseif thr > max(self.get_parameters)
+                thr = +Inf;
+            end
             
         end        
         
