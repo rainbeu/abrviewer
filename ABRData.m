@@ -30,6 +30,7 @@ classdef ABRData < ExperimentalData
         filter_method(1, :) char = 'lowess'
         filter_detrend(1, 1) logical = false
         filter_detrend_order(1, 1) double = 2
+        threshold_criterion = 0.5
     end
     
     properties (Access = private, Constant = true)
@@ -289,9 +290,7 @@ classdef ABRData < ExperimentalData
         
         function thr = estimate_threshold(self)
             %%%% hier heftig aufräumen!!!
-            criterion = 0.35;
-%             time_limits = [0.5e-3 3.5e-3];
-            time_limits = [0e-3 5e-3];
+            time_limits = [0.5e-3 4.5e-3];
             
             waveforms = self.get_filtered_data;
             idx = self.time >min(time_limits) & self.time < max(time_limits);
@@ -311,8 +310,8 @@ classdef ABRData < ExperimentalData
                             [0 1 50 0.1],...
                             L,...
                             CC,...
-                            [0 criterion min(L) 0.005],...
-                            [criterion 1 max(L) 0.999],...
+                            [0 self.threshold_criterion min(L) 0.005],...
+                            [self.threshold_criterion 1 max(L) 0.999],...
                             optimset('Display','none'));
             pp = lsqcurvefit(@(p,x)p(1)*x.^p(2)+p(3),...
                             [1 1 0],...
@@ -329,8 +328,8 @@ classdef ABRData < ExperimentalData
             RMSp = rms(fit_power-CC);
             R2p = corr((fit_power),(CC))^2;
                         
-            thrs = ps(3)-log10((ps(2)-ps(1))./(criterion-ps(1))-1)/ps(4);
-            thrp = ((criterion-pp(3))/pp(1))^(1/pp(2));
+            thrs = ps(3)-log10((ps(2)-ps(1))./(self.threshold_criterion-ps(1))-1)/ps(4);
+            thrp = ((self.threshold_criterion-pp(3))/pp(1))^(1/pp(2));
             
 %             figure
 %             subplot(1,5,[1 2 3 4]);
@@ -346,16 +345,16 @@ classdef ABRData < ExperimentalData
 %                  ps(1)+(ps(2)-ps(1))./(1+10.^(ps(4)*(ps(3)-l))),l,...
 %                  pp(1)*l.^pp(2)+pp(3),l...
 %                  )
-%             line([criterion 0 0;criterion 1 1],[0 thrs thrp;100 thrs thrp],'color','k','linestyle','--')
+%             line([self.threshold_criterion 0 0;self.threshold_criterion 1 1],[0 thrs thrp;100 thrs thrp],'color','k','linestyle','--')
 %             ylim([min(L)-10 max(L)+10]);
 %             xlim([0 1]);
 %             grid on
 %             pause
 %             close
             
-            if ps(1) < criterion && ps(2) > criterion && ps(4) > 0.005 && ps(4) < 0.999 && RMSs < RMSp && min(CC) < criterion
+            if ps(1) < self.threshold_criterion && ps(2) > self.threshold_criterion && ps(4) > 0.005 && ps(4) < 0.999 && RMSs < RMSp && min(CC) < self.threshold_criterion
                 thr = thrs;
-            elseif R2p > 0.7 && max(CC) > criterion
+            elseif R2p > 0.7 && max(CC) > self.threshold_criterion
                 thr = thrp;
             else
 %                 ps
@@ -365,13 +364,13 @@ classdef ABRData < ExperimentalData
 %                 R2p
                 thr = nan;
                 % or find the threshold by 
-                pre = find(CC<criterion, 1, 'last');
+                pre = find(CC<self.threshold_criterion, 1, 'last');
                 if pre == length(L)
                     thr = +Inf;
                 elseif isempty(pre)
                     thr = -Inf;
                 else
-                    thr = interp1(CC(pre:pre+1),L(pre:pre+1),criterion);
+                    thr = interp1(CC(pre:pre+1),L(pre:pre+1),self.threshold_criterion);
                 end                
             end
             

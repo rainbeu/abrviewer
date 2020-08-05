@@ -14,6 +14,7 @@ classdef ABRViewerDisplay < ABRViewerBase
         save_handle
         minfreq_handle
         maxfreq_handle
+        criterion_handle
         legend_handles
     end
     
@@ -60,7 +61,7 @@ classdef ABRViewerDisplay < ABRViewerBase
         
         function the_handle = create_figure_window(self)
             the_handle = figure('tag', 'ABR viewer', 'units', 'characters', ...
-                'position', [-167    12   148    43], 'menubar', 'none',  ...
+                'position', [167    12   148    43], 'menubar', 'none',  ...
                 'WindowButtonDownFcn', @(src, evt)self.mouse_click_callback(src, evt), ...
                 'name', 'ABR Display');
         end
@@ -92,6 +93,11 @@ classdef ABRViewerDisplay < ABRViewerBase
             self.maxfreq_handle = uicontrol(self.figure_handle, 'style', 'edit', 'units', 'normalized', ...
                 'position', [0.8 0.955 0.06 0.025], 'tag', 'maxfreq', 'string', '3000',...
                 'callback', @(src,evt)self.frequency_callback);
+            uicontrol(self.figure_handle, 'style', 'text', 'units', 'normalized', ...
+                'position', [0.9 0.955 0.1 0.025], 'string', 'Crit. value');
+            self.criterion_handle = uicontrol(self.figure_handle, 'style', 'edit', 'units', 'normalized', ...
+                'position', [0.92 0.925 0.06 0.025], 'tag', 'maxfreq', 'string', '-1',...
+                'callback', @(src,evt)self.criterion_callback);
             uicontrol(self.figure_handle, 'style', 'text', 'units', 'normalized', ...
                 'position', [0.86 0.95 0.04 0.025], 'string', 'Hz');
             %             uicontrol(self.figure_handle, 'style', 'togglebutton', 'units', 'normalized', ...
@@ -186,6 +192,33 @@ classdef ABRViewerDisplay < ABRViewerBase
             set(self.minfreq_handle, 'String', sprintf('%1.0f', min_freq));
             set(self.maxfreq_handle, 'String', sprintf('%1.0f', max_freq));
             self.update;
+        end
+        
+        
+        function criterion_callback(self)
+            value = self.get_criterion;
+            self.set_criterion(value);
+        end
+        
+        function set_criterion(self, criterion)
+            self.criterion_handle.String = sprintf('%1.3f', criterion);
+            for dx = 1:length(self.data)
+                self.data(dx).threshold_criterion = criterion;
+            end
+            if ~isempty(self.data)
+                self.update;
+            end
+        end
+        
+        function value = get_criterion(self)
+            value = str2double(self.criterion_handle.String);
+            if value < 0 || value > 1
+                if ~isempty(self.data)
+                    value = self.data(1).threshold_criterion;
+                else
+                    value = 0.5;
+                end
+            end
         end
         
         function pdf_callback(self)

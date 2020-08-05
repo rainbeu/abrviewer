@@ -101,6 +101,9 @@ classdef ABRViewerList < ABRViewerBase
                 if isfield(config, 'display_position')
                     self.display_window.set_figure_position(config.display_position);
                 end
+                if isfield(config, 'threshold_criterion')
+                    self.display_window.set_criterion(config.threshold_criterion);
+                end
             else
                 warning('default config file (%s) not found', self.config_file_name);
             end
@@ -110,6 +113,7 @@ classdef ABRViewerList < ABRViewerBase
             config.path_name = get(self.path_handle, 'string');
             config.list_position = self.get_figure_position;
             config.display_position = self.display_window.get_figure_position;
+            config.threshold_criterion = self.display_window.get_criterion;
             save(self.config_file_name, '-struct', 'config');
         end
         
@@ -161,6 +165,7 @@ classdef ABRViewerList < ABRViewerBase
         function update_display(self)
             self.load_files;
             self.display_window.update_data(self.data(self.get_current_positions), self.get_main_position);
+            self.display_window.criterion_callback;
         end
         
     end
@@ -216,12 +221,13 @@ classdef ABRViewerList < ABRViewerBase
             file_list = self.get_file_list;
             fprintf('\n\n');
             fprintf('--- START automatically estimated thresholds ---\n\n');
-            fprintf('%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n', ...
+            fprintf('%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n', ...
                 'filename', ...
                 'file date','file time','subject name','side',' stimulus',...
-                'min level','max level','est. ABR threshold','high/low');
+                'min level','max level','est. ABR threshold','high/low','criterion','max W1 amp');
             for idx = 1:length(file_list)
                 data = ABRData(fullfile(self.get_path_name, file_list{idx}));
+                data.threshold_criterion = self.display_window.get_criterion;
                 thr = data.estimate_threshold;
                 tokens = regexp(file_list{idx}, 'datafile_(\d{4}-\d{2}-\d{2})-(\d{2}-\d{2}-\d{2})[-_]([^_-]+)[-_]([^_-]+)[-_]([^_-]+).*\.mat', 'tokens');
                 if isempty(tokens)
@@ -237,11 +243,18 @@ classdef ABRViewerList < ABRViewerBase
                 else
                     highlow = '';
                 end
-                fprintf('%s;%s;%s;%s;%s;%s;%1.1f;%1.1f;%1.1f;%s\n', ...
+                
+                if ~isempty(data.wave_amp)
+                    max_amp = max(data.wave_amp(:,1));
+                else
+                    max_amp = NaN;
+                end
+                    
+                fprintf('%s;%s;%s;%s;%s;%s;%1.1f;%1.1f;%1.1f;%s;%1.3f;%1.1f\n', ...
                     file_list{idx}, ...
                     tokens{1}{:},...
                     min(data.get_parameters), max(data.get_parameters), ...
-                    thr, highlow);
+                    thr, highlow, data.threshold_criterion, max_amp);
             end
             fprintf('\n\n');
             fprintf('--- END automatically estimated thresholds ---\n\n');
