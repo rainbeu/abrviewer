@@ -188,21 +188,31 @@ classdef ABRData < ExperimentalData
             
             assert(isstruct(rawdata), 'no data found in data file %s!', file_path);
             assert(all(isfield(rawdata, {'St', 'Avg', 'Mic'})), 'data not valid in data file %s!', file_path);
-            if isfield(rawdata.St, {'StimulusLevelOffsets'})
-                assert(all(isfield(rawdata.St, {'StimulusLevelOffsets'})), 'data not valid in data file %s!', file_path);
-                % main parameter: level range
-                self.parameters = rawdata.St.StimulusLevelOffsets;
-            else 
-                assert(all(isfield(rawdata.St, {'LevelThreshold'})), 'data not valid in data file %s!', file_path);
+            if isfield(rawdata.St, {'PresentationType'}) && strcmp(rawdata.St.PresentationType, 'L/R/B') 
+                if isempty(self.data_index) || self.data_index == 0 % ok if data index is specified, otherwise need to loop over indices
+                    throw(MException('abrviewer:multilateraldata', '%1.0f', size(rawdata.Avg, 2)));
+                end
+            end
+            if isfield(rawdata.St, {'LevelThreshold'}) && rawdata.St.LevelThreshold
                 % main parameter: level range
                 self.parameters = rawdata.St.Level + rawdata.St.ILD;
+            elseif isfield(rawdata.St, {'StimulusLevelOffsets'})
+                % main parameter: level range
+                self.parameters = rawdata.St.Level + rawdata.St.StimulusLevelOffsets;
+            else
+                error('abrviewer:invaliddata', 'data not valid in data file %s!', file_path);
             end
             
             % constant parameters
             self.fs = rawdata.St.Fs;
             
             % main data
-            self.ABR = rawdata.Avg(:, 1:length(self.parameters));
+            if isempty(self.data_index) || self.data_index == 0
+                self.ABR = rawdata.Avg(:, 1:length(self.parameters));
+            else % multilateral/ITD type data, pick one side/ITD
+                self.ABR = squeeze(rawdata.Avg(:, self.data_index, 1:length(self.parameters)));
+                rawdata.Mic = squeeze(rawdata.Mic(:, :, self.data_index, :));
+            end
             [~, channel] = max(range(range(rawdata.Mic,1),3));
             self.Mic = squeeze(rawdata.Mic(:, channel, 1:length(self.parameters)));
             

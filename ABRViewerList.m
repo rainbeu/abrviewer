@@ -154,11 +154,48 @@ classdef ABRViewerList < ABRViewerBase
             for idx = 1:length(positions)
                 pos = positions(idx);
                 if pos > length(self.data)
-                    self.data(pos) = ABRData(fullfile(self.get_path_name, file_list{idx}));
+                    try
+                        self.data(pos) = ABRData(fullfile(self.get_path_name, file_list{idx}));
+                    catch exc
+                        if strcmp(exc.identifier, 'abrviewer:multilateraldata')
+                            [tmpdata, tmpfiles] = self.load_multilateral_files(file_list{idx}, str2double(exc.message));
+                            num_sides = length(tmpdata);
+                            positions(idx+1:end) = positions(idx+1:end) + num_sides - 1;
+                            file_list = self.get_file_list;
+                            file_list = cat(1, file_list(1:pos-1), tmpfiles, file_list(pos+1:end));
+                            set(self.listbox_handle, 'String', file_list);
+                            set(self.listbox_handle, 'Value', positions);
+                            if isempty(self.data)
+                                self.data = tmpdata;
+                            else
+                                self.data = cat(1, self.data(1:pos-1), tmpdata, self.data(pos+1:end));
+                            end
+                        else
+                            rethrow(exc);
+                        end
+                    end
                 elseif (~self.data(pos).data_is_valid ...
                          || ~strcmp(self.data(pos).file_name, fullfile(self.get_path_name, file_list{idx})))
-                    self.data(pos).import_from_file(fullfile(self.get_path_name, file_list{idx}));
+                     tok = regexp(file_list{idx}, '^(Left|Right|Binaural(?=#))?#?(\d+(?=::))?(?:::)?(.*)','tokens');
+                     side = str2num(tok{1}{2});
+                     file_name = tok{1}{3};
+                     self.data(pos).import_from_file(fullfile(self.get_path_name, file_name));
                 end
+            end
+        end
+        
+        function [tmpdata, tmpfiles] = load_multilateral_files(self, file_name, num_sides)
+            for side = 1:num_sides
+                tmpdata(side, 1) = ABRData(fullfile(self.get_path_name, file_name), side);
+                switch side
+                    case 1
+                        prefix = 'Left';
+                    case 2
+                        prefix = 'Right';
+                    otherwise
+                        prefix = 'Binaural';
+                end
+                tmpfiles{side, 1} = sprintf('%s#%1.0f::%s', prefix, side, file_name);
             end
         end
         

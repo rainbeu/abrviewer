@@ -4,12 +4,16 @@ classdef ExperimentalData < matlab.mixin.Copyable
     
     properties (Access = public)
         file_name
+        data_index
     end
     
     methods
         
         function obj = ExperimentalData(varargin)
             if nargin > 0
+                if nargin >= 2
+                    obj.data_index = varargin{2};
+                end
                 obj.import_from_file(varargin{1});
             end
         end
