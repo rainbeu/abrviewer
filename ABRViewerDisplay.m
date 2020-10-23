@@ -387,7 +387,14 @@ classdef ABRViewerDisplay < ABRViewerBase
 %             main_data = self.data(self.main_entry);
             main_data = self.data(idx);
             noise_ci = main_data.get_noise_confidence_int;
+            
+            marker_sym = {'v', '^'};
+            
             for posneg = 1:2
+                
+                marker_offset = (3-2*posneg) * self.point_offset;
+                text_offset = (1.5+(posneg-1)*4.5) * marker_offset;
+                
                 for wave_nr = 1:min(size(main_data.wave_amp, 2), size(main_data.wave_lat, 2))
                     n_waveforms = min(size(main_data.wave_amp, 1), size(main_data.wave_lat, 1));
                     cmap = squeeze(hsv2rgb((0:n_waveforms-1).'/n_waveforms,1*ones(n_waveforms,1),0.7*ones(n_waveforms,1)));
@@ -396,9 +403,9 @@ classdef ABRViewerDisplay < ABRViewerBase
                         latency = main_data.wave_lat(cond, wave_nr, posneg);
 
                         if ~isnan(amplitude) && ~isnan(latency) && (amplitude ~= 0 || latency ~= 0)
-                            hl = line(latency, amplitude + self.point_offset + self.offsets(pos(cond)), ...
+                            hl = line(latency, amplitude + marker_offset + self.offsets(pos(cond)), ...
                                 'color', cmap(cond, :), 'MarkerSize', self.marker_size, ...
-                                'marker', 'v', 'parent', self.axes_handle, 'Tag', 'ABR');
+                                'marker', marker_sym{posneg}, 'parent', self.axes_handle, 'Tag', 'ABR');
                             if abs(amplitude) > noise_ci(cond)
                                 set(hl, 'MarkerFaceColor', cmap(cond, :));
                             else
@@ -406,8 +413,8 @@ classdef ABRViewerDisplay < ABRViewerBase
                             end         
                             switch idx
                                 case 1
-                                    set(hl, 'Marker', 'v');
-                                    text(latency, amplitude + 1.5*self.point_offset + self.offsets(pos(cond)), ...
+                                    set(hl, 'Marker', marker_sym{posneg});
+                                    text(latency, amplitude + text_offset + self.offsets(pos(cond)), ...
                                         num2str(wave_nr), ...
                                         'color', 'r', 'horizontalalignment', 'center', ...
                                         'verticalalignment', 'bottom', 'parent', self.axes_handle);
