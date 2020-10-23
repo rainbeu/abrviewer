@@ -283,6 +283,9 @@ classdef ABRViewerDisplay < ABRViewerBase
         function update(self)
             self.prepare_plot;
             
+            % increase "Schwuppdizität"
+            drawnow;
+            
             for idx = 1:length(self.data)
                 if any(ismember(self.flags, 'mic'))
                     self.plot_mic(idx);
