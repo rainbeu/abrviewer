@@ -388,8 +388,8 @@ classdef ABRViewerDisplay < ABRViewerBase
                 n_waveforms = min(size(main_data.wave_amp, 1), size(main_data.wave_lat, 1));
                 cmap = squeeze(hsv2rgb((0:n_waveforms-1).'/n_waveforms,1*ones(n_waveforms,1),0.7*ones(n_waveforms,1)));
                 for cond = 1:n_waveforms
-                    amplitude = main_data.wave_amp(cond, wave_nr);
-                    latency = main_data.wave_lat(cond, wave_nr);
+                    amplitude = main_data.wave_amp(cond, wave_nr, 1);
+                    latency = main_data.wave_lat(cond, wave_nr, 1);
                     
                     if ~isnan(amplitude) && ~isnan(latency) && (amplitude ~= 0 || latency ~= 0)
                         hl = line(latency, amplitude + self.point_offset + self.offsets(pos(cond)), ...
@@ -423,9 +423,9 @@ classdef ABRViewerDisplay < ABRViewerBase
             lats = main_data.wave_lat;
             for idx = 1:size(amps, 1)
                 if size(amps, 2) >= 4
-                    ratio = amps(idx, 4) ./ amps(idx, 1);
+                    ratio = amps(idx, 4, 1) ./ amps(idx, 1, 1);
                     if ~isinf(ratio) && ~isnan(ratio)
-                        text(mean([lats(idx,1), lats(idx,4)]), self.offsets(idx) + amps(idx, 1)/2, sprintf('%1.3f', ratio), ...
+                        text(mean([lats(idx,1,1), lats(idx,4,1)]), self.offsets(idx) + amps(idx, 1, 1)/2, sprintf('%1.3f', ratio), ...
                             'horizontalalignment', 'center', 'verticalalignment', 'bottom', ...
                             'fontsize', 8, 'parent', self.axes_handle);
                     end
@@ -482,12 +482,12 @@ classdef ABRViewerDisplay < ABRViewerBase
             answer = questdlg('Delete Marker?', 'Question', 'Yes', 'No', 'All', 'No');
             if strcmp(answer, 'Yes')
                 self.save_handle.String = '* Save *';
-                main_data.wave_lat(cond_idx, wave_idx) = NaN;
-                main_data.wave_amp(cond_idx, wave_idx) = NaN;
+                main_data.wave_lat(cond_idx, wave_idx, 1) = NaN;
+                main_data.wave_amp(cond_idx, wave_idx, 1) = NaN;
                 main_data.save_to_file(self.save_handle);
             elseif strcmp(answer, 'All')
-                main_data.wave_lat(:, :) = NaN;
-                main_data.wave_amp(:, :) = NaN;
+                main_data.wave_lat(:, :, :) = NaN;
+                main_data.wave_amp(:, :, :) = NaN;
             end
             self.update;
         end

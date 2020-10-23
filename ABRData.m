@@ -4,6 +4,7 @@ classdef ABRData < ExperimentalData
     
     
     properties (Access = public)
+        % dimensions are: condition (size(ABR,1)), wave nr, pos=1 neg=2
         wave_amp
         wave_lat
     end
@@ -148,8 +149,8 @@ classdef ABRData < ExperimentalData
             self.ABR    = self.ABR(:, idx);
             self.filter_updated = true;
             self.Mic    = self.Mic(:, idx);
-            self.wave_lat = self.wave_lat(idx, :);
-            self.wave_amp = self.wave_amp(idx, :);
+            self.wave_lat = self.wave_lat(idx, :, :);
+            self.wave_amp = self.wave_amp(idx, :, :);
         end
         
         function [min_freq, max_freq] = set_filter_limits(self, new_filter_limits)
@@ -221,13 +222,22 @@ classdef ABRData < ExperimentalData
                 self.wave_amp = rawdata.wave_amp;
                 self.wave_lat = rawdata.wave_lat;
             else
-                self.wave_amp = nan(size(self.ABR, 2), self.number_of_wave_peaks);
-                self.wave_lat = nan(size(self.ABR, 2), self.number_of_wave_peaks);
+                self.wave_amp = nan(size(self.ABR, 2), self.number_of_wave_peaks, 2);
+                self.wave_lat = nan(size(self.ABR, 2), self.number_of_wave_peaks, 2);
             end
-            self.wave_amp(size(self.ABR, 2)+1:end, :) = [];
-            self.wave_amp(:, self.number_of_wave_peaks+1:end) = [];
-            self.wave_lat(size(self.ABR, 2)+1:end, :) = [];
-            self.wave_lat(:, self.number_of_wave_peaks+1:end) = [];
+            % cut wave form data array to expected size
+            self.wave_amp(size(self.ABR, 2)+1:end, :, :) = [];
+            self.wave_amp(:, self.number_of_wave_peaks+1:end, :) = [];
+            self.wave_lat(size(self.ABR, 2)+1:end, :, :) = [];
+            self.wave_lat(:, self.number_of_wave_peaks+1:end, :) = [];
+
+            % extend waveform data array to expected size, if necessary
+            self.wave_amp(:, :, end+1:2) = NaN;
+            self.wave_amp(end+1:size(self.ABR, 2), :, 1:2) = NaN;
+            self.wave_amp(:, end+1:self.number_of_wave_peaks, 1:2) = NaN;
+            self.wave_lat(:, :, end+1:2) = NaN;
+            self.wave_lat(end+1:size(self.ABR, 2), :, :) = NaN;
+            self.wave_lat(:, end+1:self.number_of_wave_peaks, :) = NaN;
             
             if isfield(rawdata, 'filter_limits')
                 self.filter_limits = rawdata.filter_limits;
@@ -393,15 +403,18 @@ classdef ABRData < ExperimentalData
         end        
         
         function set_wave(self, peak, location, condition, number, button_handle)
+            
+            posneg = 1;
+            
             % prepare NaNs (otherwise will be filled with zeros)
-            self.wave_amp(end+1:condition, :) = NaN;
-            self.wave_amp(:, end+1:number) = NaN;
+            self.wave_amp(end+1:condition, :, :) = NaN;
+            self.wave_amp(:, end+1:number, :) = NaN;
             self.wave_lat(end+1:condition, :) = NaN;
             self.wave_lat(:, end+1:number) = NaN;
             
             % write new values
-            self.wave_amp(condition, number) = peak;
-            self.wave_lat(condition, number) = location;
+            self.wave_amp(condition, number, posneg) = peak;
+            self.wave_lat(condition, number, posneg) = location;
 
             self.save_to_file(button_handle);
         end
@@ -412,14 +425,14 @@ classdef ABRData < ExperimentalData
                 for k = 1:length(self.parameters)
                     fprintf('%s;%1.0f;', self.file_name, self.parameters(k));
                     for w = 1:3:size(self.wave_amp, 2)
-                        if ~(self.wave_amp(k, w) == 0 && self.wave_lat(k, w) == 0) &&  ~(isnan(self.wave_amp(k, w)) && isnan(self.wave_lat(k, w)))
-                            fprintf('%1.0f;%1.3f;%1.03f;', w, self.wave_amp(k, w), self.wave_lat(k, w));
+                        if ~(self.wave_amp(k, w, posneg) == 0 && self.wave_lat(k, w) == 0) &&  ~(isnan(self.wave_amp(k, w, posneg)) && isnan(self.wave_lat(k, w)))
+                            fprintf('%1.0f;%1.3f;%1.03f;', w, self.wave_amp(k, w, posneg), self.wave_lat(k, w));
                         else
                             fprintf(';;;');
                         end
                     end
                     if size(self.wave_amp, 2) >= 4
-                        ratio = self.wave_amp(k, 4)/self.wave_amp(k, 1);
+                        ratio = self.wave_amp(k, 4, 1)/self.wave_amp(k, 1, 1);
                         if ~isinf(ratio) && ~isnan(ratio) && ratio ~= 0
                             fprintf(';4:1;%1.03f;', ratio);
                         else

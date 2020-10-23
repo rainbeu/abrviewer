@@ -282,7 +282,7 @@ classdef ABRViewerList < ABRViewerBase
                 end
                 
                 if ~isempty(data.wave_amp)
-                    max_amp = max(data.wave_amp(:,1));
+                    max_amp = max(max(abs(data.wave_amp(:,1,:))));
                 else
                     max_amp = NaN;
                 end
