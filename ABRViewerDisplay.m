@@ -514,8 +514,10 @@ classdef ABRViewerDisplay < ABRViewerBase
                         find_max = false;
                     end
                     if ~strcmp(answer, 'Cancel')
-                        answer = questdlg('Assign wave number...', 'Question', '1', '4', '1');
-                        wave_number = str2double(answer);
+%                         answer = questdlg('Assign wave number...', 'Question', '1', '2', '3', '4', '5', '1');
+                        dlg = wavequestdlg(self.figure_handle);
+                        dlg.show;
+                        wave_number = dlg.number;
                         while line_number(2) > 0
                             [peak, location] = self.data(line_number(1)).find_peak(line_number(2), start_point - [0 self.offsets(line_number(2))], find_max);
                             hl = line(location, peak + self.offsets(line_number(2)), 'color', 'r', 'marker', 'v');
