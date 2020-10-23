@@ -488,14 +488,14 @@ classdef ABRViewerDisplay < ABRViewerBase
         
         function check_marker_delete(self, line_number, start_point)
             main_data = self.data(self.main_entry);
-            [mn, cond_idx] = min((main_data.wave_amp-(start_point(2)-self.offsets(8))).^2+(main_data.wave_lat-start_point(1)).^2);
-            [~, wave_idx] = min(mn);
-            cond_idx = cond_idx(wave_idx);
+            D = (main_data.wave_amp-(start_point(2)-self.offsets(:))).^2+(main_data.wave_lat-start_point(1)).^2;
+            [~, idx] = min(D(:));
+            [cond_idx, wave_idx, posneg] = ind2sub(size(main_data.wave_amp), idx);
             answer = questdlg('Delete Marker?', 'Question', 'Yes', 'No', 'All', 'No');
             if strcmp(answer, 'Yes')
                 self.save_handle.String = '* Save *';
-                main_data.wave_lat(cond_idx, wave_idx, 1) = NaN;
-                main_data.wave_amp(cond_idx, wave_idx, 1) = NaN;
+                main_data.wave_lat(cond_idx, wave_idx, posneg) = NaN;
+                main_data.wave_amp(cond_idx, wave_idx, posneg) = NaN;
                 main_data.save_to_file(self.save_handle);
             elseif strcmp(answer, 'All')
                 main_data.wave_lat(:, :, :) = NaN;
