@@ -402,9 +402,7 @@ classdef ABRData < ExperimentalData
             
         end        
         
-        function set_wave(self, peak, location, condition, number, button_handle)
-            
-            posneg = 1;
+        function set_wave(self, peak, location, condition, number, button_handle, posneg)
             
             % prepare NaNs (otherwise will be filled with zeros)
             self.wave_amp(end+1:condition, :, :) = NaN;

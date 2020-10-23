@@ -500,7 +500,7 @@ classdef ABRViewerDisplay < ABRViewerBase
         function process_peaks(self, line_number, start_point)
             if line_number(1) > 0 && line_number(1) <= length(self.data)
                 if line_number(2) > 0 && line_number(2) <= length(self.offsets)
-                    answer = questdlg('Maximum or minimum?', 'Question', 'Maximum', 'Minimum', 'Cancel', 'Maximum');
+                    answer = questdlg('Maximum (P) or minimum (N)?', 'Question', 'Maximum', 'Minimum', 'Cancel', 'Maximum');
                     if strcmp(answer, 'Maximum')
                         find_max = true;
                     else
@@ -522,7 +522,7 @@ classdef ABRViewerDisplay < ABRViewerBase
                                     fprintf('idx: %1.0f, number: %1.0f, wave_number: %1.0f, peak: %1.1f, location: %1.1f\n', line_number, wave_number, peak, location);
                                 end
                                 self.save_handle.String = '* Save *';
-                                self.data(line_number(1)).set_wave(peak, location, line_number(2), wave_number, self.save_handle);
+                                self.data(line_number(1)).set_wave(peak, location, line_number(2), wave_number, self.save_handle, 2-find_max);
                             end
                             line_number(2) = line_number(2) - 1;
                             if line_number(2) > 0
