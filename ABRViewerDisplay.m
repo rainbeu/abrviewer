@@ -520,7 +520,7 @@ classdef ABRViewerDisplay < ABRViewerBase
                         wave_number = dlg.number;
                         while line_number(2) > 0
                             [peak, location] = self.data(line_number(1)).find_peak(line_number(2), start_point - [0 self.offsets(line_number(2))], find_max);
-                            hl = line(location, peak + self.offsets(line_number(2)), 'color', 'r', 'marker', 'v');
+                            hl = line(self.axes_handle, location, peak + self.offsets(line_number(2)), 'color', 'r', 'marker', 'x', 'linewidth', 2);
                             answer = questdlg('Use this peak?', 'Question', 'Yes', 'No', 'Yes');
                             if strcmp(answer, 'No')
                                 delete(hl);
