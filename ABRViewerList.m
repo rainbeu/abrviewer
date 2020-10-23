@@ -14,6 +14,7 @@ classdef ABRViewerList < ABRViewerBase
         previous_handle
         next_handle
         print_handle
+        export_handle
         print_thr_handle
     end
     
@@ -68,8 +69,11 @@ classdef ABRViewerList < ABRViewerBase
                 'position', [0.75 0.025 0.2 0.1], 'tag', 'next', 'string', '>', ...
                 'callback', @(src,evt)self.next_callback(src, evt));
             self.print_handle = uicontrol(self.figure_handle, 'style', 'pushbutton', 'units', 'normalized', ...
-                'position', [0.30 0.025 0.4 0.045], 'tag', 'next', 'string', 'print list', ...
+                'position', [0.30 0.025 0.1875 0.045], 'tag', 'next', 'string', 'print list', ...
                 'callback', @(src,evt)self.print_callback(src, evt));
+            self.export_handle = uicontrol(self.figure_handle, 'style', 'pushbutton', 'units', 'normalized', ...
+                'position', [0.5125 0.025 0.1875 0.045], 'tag', 'next', 'string', 'export list', ...
+                'callback', @(src,evt)self.export_callback(src, evt));
             self.print_thr_handle = uicontrol(self.figure_handle, 'style', 'pushbutton', 'units', 'normalized', ...
                 'position', [0.30 0.08 0.4 0.045], 'tag', 'next', 'string', 'print thresholds', ...
                 'callback', @(src,evt)self.print_thr_callback(src, evt));
@@ -250,7 +254,17 @@ classdef ABRViewerList < ABRViewerBase
         
         function print_callback(self, source, event)
             for idx = 1:length(self.data)
-                self.data(idx).print_data_table;
+                self.data(idx).print_data_table(false, []);
+            end
+        end
+        
+        function export_callback(self, source, event)
+            fid = [];
+            for idx = 1:length(self.data)
+                fid = self.data(idx).print_data_table(true, fid);
+            end
+            if ~isempty(fid)
+                fclose(fid);
             end
         end
         

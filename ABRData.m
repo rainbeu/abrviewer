@@ -417,27 +417,45 @@ classdef ABRData < ExperimentalData
             self.save_to_file(button_handle);
         end
         
-        function print_data_table(self)
+        function fid = print_data_table(self, toFile, fid)
+            if toFile
+                if isempty(fid)
+                    [file, path] = uiputfile('*.csv', 'Select file name for export');
+                    if isnumeric(file) && isnumeric(path)
+                        return
+                    end
+                    fid = fopen(fullfile(path, file), 'w');
+                end
+                if isempty(fid)
+                    msgbox(sprintf('Could not open file %s for writing', fullfile(path,file)), 'modal', 'error');
+                    return
+                end
+            else
+                fid = 1;
+            end
             if self.data_is_valid
-                fprintf('file name;level;wave number;amplitude / µV; latency / ms;wave number;amplitude / µV; latency / ms;\n');
+                fprintf(fid, 'file name;level;wave number;amplitude / µV; latency / ms;wave number;amplitude / µV; latency / ms;\n');
                 for k = 1:length(self.parameters)
-                    fprintf('%s;%1.0f;', self.file_name, self.parameters(k));
-                    for w = 1:3:size(self.wave_amp, 2)
-                        if ~(self.wave_amp(k, w, posneg) == 0 && self.wave_lat(k, w) == 0) &&  ~(isnan(self.wave_amp(k, w, posneg)) && isnan(self.wave_lat(k, w)))
-                            fprintf('%1.0f;%1.3f;%1.03f;', w, self.wave_amp(k, w, posneg), self.wave_lat(k, w));
-                        else
-                            fprintf(';;;');
+                    fprintf(fid, '%s;%1.0f;', self.file_name, self.parameters(k));
+                    for posneg = 1:2
+                        for w = 1:size(self.wave_amp, 2)
+                            if ~(self.wave_amp(k, w, posneg) == 0 && self.wave_lat(k, w, posneg) == 0) ...
+                                    &&  ~(isnan(self.wave_amp(k, w, posneg)) && isnan(self.wave_lat(k, w, posneg)))
+                                fprintf(fid, '%1.0f;%1.3f;%1.03f;', w, self.wave_amp(k, w, posneg), self.wave_lat(k, w, posneg));
+                            else
+                                fprintf(fid, ';;;');
+                            end
                         end
                     end
                     if size(self.wave_amp, 2) >= 4
                         ratio = self.wave_amp(k, 4, 1)/self.wave_amp(k, 1, 1);
                         if ~isinf(ratio) && ~isnan(ratio) && ratio ~= 0
-                            fprintf(';4:1;%1.03f;', ratio);
+                            fprintf(fid, ';P4:P1;%1.03f;', ratio);
                         else
-                            fprintf(';4:1;;');
+                            fprintf(fid, ';P4:P1;;');
                         end
                     end
-                    fprintf('\n');
+                    fprintf(fid, '\n');
                 end
             end
         end
