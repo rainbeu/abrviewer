@@ -17,6 +17,7 @@ classdef ABRViewerDisplay < ABRViewerBase
         criterion_handle
         legend_handles
         marker_handles
+        ratio_handle
     end
     
     properties (Access = private)
@@ -101,6 +102,11 @@ classdef ABRViewerDisplay < ABRViewerBase
                 'callback', @(src,evt)self.criterion_callback);
             uicontrol(self.figure_handle, 'style', 'text', 'units', 'normalized', ...
                 'position', [0.86 0.95 0.04 0.025], 'string', 'Hz');
+            self.ratio_handle = uicontrol(self.figure_handle, 'style', 'checkbox', 'units', 'normalized', ...
+                'position', [0.4 0.955 0.2 0.025], 'tag', 'ratiocheck', 'string', 'show P4:P1 ratio', ...
+                'callback', @(src,evt)self.callback('update', src, evt), 'value', 0);
+%             uicontrol(self.figure_handle, 'style', 'text', 'units', 'normalized', ...
+%                 'position', [0.86 0.95 0.04 0.025], 'string', 'Hz');
             %             uicontrol(self.figure_handle, 'style', 'togglebutton', 'units', 'normalized', ...
             %                 'position', [0.15 0.935 0.10 0.05], 'tag', 'overlay', 'string', 'Overlay',...
             %                 'callback', @(src,evt)self.callback('overlay', src, evt));
@@ -434,16 +440,18 @@ classdef ABRViewerDisplay < ABRViewerBase
         end
         
         function draw_ratio(self)
-            main_data = self.data(self.main_entry);
-            amps = main_data.wave_amp;
-            lats = main_data.wave_lat;
-            for idx = 1:size(amps, 1)
-                if size(amps, 2) >= 4
-                    ratio = amps(idx, 4, 1) ./ amps(idx, 1, 1);
-                    if ~isinf(ratio) && ~isnan(ratio)
-                        text(mean([lats(idx,1,1), lats(idx,4,1)]), self.offsets(idx) + amps(idx, 1, 1)/2, sprintf('%1.3f', ratio), ...
-                            'horizontalalignment', 'center', 'verticalalignment', 'bottom', ...
-                            'fontsize', 8, 'parent', self.axes_handle);
+            if get(self.ratio_handle, 'Value') 
+                main_data = self.data(self.main_entry);
+                amps = main_data.wave_amp;
+                lats = main_data.wave_lat;
+                for idx = 1:size(amps, 1)
+                    if size(amps, 2) >= 4
+                        ratio = amps(idx, 4, 1) ./ amps(idx, 1, 1);
+                        if ~isinf(ratio) && ~isnan(ratio)
+                            text(mean([lats(idx,1,1), lats(idx,4,1)]), self.offsets(idx) + amps(idx, 1, 1)/2, sprintf('%1.3f', ratio), ...
+                                'horizontalalignment', 'center', 'verticalalignment', 'bottom', ...
+                                'fontsize', 8, 'parent', self.axes_handle);
+                        end
                     end
                 end
             end
