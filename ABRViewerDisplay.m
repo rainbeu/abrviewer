@@ -16,6 +16,7 @@ classdef ABRViewerDisplay < ABRViewerBase
         maxfreq_handle
         criterion_handle
         legend_handles
+        marker_handles
     end
     
     properties (Access = private)
@@ -423,6 +424,9 @@ classdef ABRViewerDisplay < ABRViewerBase
                                 case 3
                                     set(hl, 'Marker', 'x', 'MarkerSize', 8, 'Linewidth', 1.5);
                             end % switch idx
+                            self.marker_handles(cond, wave_nr, posneg, idx) = hl;
+                        else
+                            self.marker_handles(cond, wave_nr, posneg, idx) = NaN;
                         end % if ~isnan
                     end % cond
                 end % wave_nr
@@ -491,6 +495,12 @@ classdef ABRViewerDisplay < ABRViewerBase
             D = (main_data.wave_amp-(start_point(2)-self.offsets(:))).^2+(main_data.wave_lat-start_point(1)).^2;
             [~, idx] = min(D(:));
             [cond_idx, wave_idx, posneg] = ind2sub(size(main_data.wave_amp), idx);
+            if all([cond_idx wave_idx posneg self.main_entry] <= size(self.marker_handles, [1 2 3 4]))
+                if ~isnan(self.marker_handles(cond_idx, wave_idx, posneg, self.main_entry))
+                    set(self.marker_handles(cond_idx, wave_idx, posneg, self.main_entry), ...
+                        'Marker', 'o', 'MarkerSize', 10, 'MarkerEdgeColor', 'r', 'Linewidth', 3);
+                end
+            end
             answer = questdlg('Delete Marker?', 'Question', 'Yes', 'No', 'All', 'No');
             if strcmp(answer, 'Yes')
                 self.save_handle.String = '* Save *';
