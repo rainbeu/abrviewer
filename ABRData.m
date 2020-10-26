@@ -189,7 +189,7 @@ classdef ABRData < ExperimentalData
             
             assert(isstruct(rawdata), 'no data found in data file %s!', file_path);
             assert(all(isfield(rawdata, {'St', 'Avg', 'Mic'})), 'data not valid in data file %s!', file_path);
-            if isfield(rawdata.St, {'PresentationType'}) && strcmp(rawdata.St.PresentationType, 'L/R/B') 
+            if ~isfield(rawdata.St, {'PresentationType'}) || strcmp(rawdata.St.PresentationType, 'L/R/B') 
                 if isempty(self.data_index) || self.data_index == 0 % ok if data index is specified, otherwise need to loop over indices
                     throw(MException('abrviewer:multilateraldata', '%1.0f', size(rawdata.Avg, 2)));
                 end
