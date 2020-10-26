@@ -166,13 +166,13 @@ classdef ABRViewerList < ABRViewerBase
                             num_sides = length(tmpdata);
                             positions(idx+1:end) = positions(idx+1:end) + num_sides - 1;
                             file_list = self.get_file_list;
-                            file_list = cat(1, file_list(1:pos-1), tmpfiles, file_list(pos+1:end));
+                            file_list = cat(1, file_list(1:pos-1,:), tmpfiles, file_list(pos+1:end,:));
                             set(self.listbox_handle, 'String', file_list);
                             set(self.listbox_handle, 'Value', positions);
                             if isempty(self.data)
-                                self.data = tmpdata;
+                                self.data(pos+(0:num_sides-1)) = tmpdata;
                             else
-                                self.data = cat(1, self.data(1:pos-1), tmpdata, self.data(pos+1:end));
+                                self.data = cat(1, self.data(1:pos-1,:), tmpdata, self.data(pos+1:end,:));
                             end
                         else
                             rethrow(exc);
