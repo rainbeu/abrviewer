@@ -56,6 +56,14 @@ classdef ABRViewerDisplay < ABRViewerBase
             the_handle = self.axes_handle;
         end
         
+        function mark_save_button(self)
+            self.save_handle.String = '* Save *';
+        end
+        
+        function unmark_save_button(self)
+            self.save_handle.String = 'Save';
+        end
+        
     end
     
     %% callbacks
@@ -181,7 +189,7 @@ classdef ABRViewerDisplay < ABRViewerBase
                 case 'pdf'
                     self.pdf_callback;
                 case 'save'
-                    self.data(self.main_entry).save_to_file(self.save_handle);
+                    self.data(self.main_entry).save_to_file(self);
                 otherwise
                     warning('callback %s not yet implemented', command);
             end
@@ -369,7 +377,7 @@ classdef ABRViewerDisplay < ABRViewerBase
             params = self.data(idx).get_parameters;
             pos = ismember(self.parameters, params);
             time = self.data(idx).get_time;
-            thr =  self.data(idx).estimate_threshold;
+            thr =  self.data(idx).estimate_threshold(self);
             hl = line(self.axes_handle, [min(time);max(time)]/1e-3, [1;1]*interp1(params, self.offsets(pos), thr), ...
                      'color', [0.6 0.6 0.6],'linewidth',2);
             text(self.axes_handle, min(get(self.axes_handle,'XLim'))-1, interp1(params, self.offsets(pos), thr), sprintf('%1.1f', thr));
@@ -511,10 +519,10 @@ classdef ABRViewerDisplay < ABRViewerBase
             end
             answer = questdlg('Delete Marker?', 'Question', 'Yes', 'No', 'All', 'No');
             if strcmp(answer, 'Yes')
-                self.save_handle.String = '* Save *';
+                self.mark_save_button
                 main_data.wave_lat(cond_idx, wave_idx, posneg) = NaN;
                 main_data.wave_amp(cond_idx, wave_idx, posneg) = NaN;
-                main_data.save_to_file(self.save_handle);
+                main_data.save_to_file(self);
             elseif strcmp(answer, 'All')
                 main_data.wave_lat(:, :, :) = NaN;
                 main_data.wave_amp(:, :, :) = NaN;
@@ -548,8 +556,8 @@ classdef ABRViewerDisplay < ABRViewerBase
                                 if self.debug_mode
                                     fprintf('idx: %1.0f, number: %1.0f, wave_number: %1.0f, peak: %1.1f, location: %1.1f\n', line_number, wave_number, peak, location);
                                 end
-                                self.save_handle.String = '* Save *';
-                                self.data(line_number(1)).set_wave(peak, location, line_number(2), wave_number, self.save_handle, 2-find_max);
+                                self.mark_save_button
+                                self.data(line_number(1)).set_wave(peak, location, line_number(2), wave_number, self, 2-find_max);
                             end
                             line_number(2) = line_number(2) - 1;
                             if line_number(2) > 0

@@ -7,6 +7,7 @@ classdef ABRData < ExperimentalData
         % dimensions are: condition (size(ABR,1)), wave nr, pos=1 neg=2
         wave_amp
         wave_lat
+        current_thr
     end
     
     properties (Access = public)
@@ -267,15 +268,22 @@ classdef ABRData < ExperimentalData
 %                 fprintf('DEBUG: data was never switched\n');
             end            
             
+            if isfield(rawdata, 'abr_thr')
+                self.current_thr = rawdata.abr_thr;
+            else
+                self.current_thr = [];
+            end
+            
         end
         
-        function save_to_file(self, button_handle)
+        function save_to_file(self, display_handle)
             % load original data from file into structure and only change
             % additional fields
             rawdata = load(self.file_name);
             
             rawdata.wave_amp = self.wave_amp;
             rawdata.wave_lat = self.wave_lat;
+            rawdata.abr_thr = self.current_thr;
             
             rawdata.filter_limits = self.filter_limits;
             
@@ -283,8 +291,8 @@ classdef ABRData < ExperimentalData
             
             % load full data structure to file (with fields as variables)
             save(self.file_name, '-struct', 'rawdata');
-            if ~isempty(button_handle) && ishandle(button_handle)
-                button_handle.String = 'Save';
+            if ~isempty(display_handle) && isa(display_handle,'ABRViewerDisplay')
+                display_handle.unmark_save_button;
             end
         end
        
@@ -308,7 +316,7 @@ classdef ABRData < ExperimentalData
             location = locations(idx);
         end
         
-        function thr = estimate_threshold(self)
+        function thr = estimate_threshold(self, display_handle)
             %%%% hier heftig aufräumen!!!
             time_limits = [0.5e-3 4.5e-3];
             
@@ -400,9 +408,17 @@ classdef ABRData < ExperimentalData
                 thr = +Inf;
             end
             
+            if isempty(self.current_thr) || thr ~= self.current_thr
+                self.current_thr = thr;
+                if ~isempty(display_handle) && isa(display_handle,'ABRViewerDisplay')
+                    display_handle.mark_save_button;
+                end
+            end
+            self.save_to_file(display_handle);
+            
         end        
         
-        function set_wave(self, peak, location, condition, number, button_handle, posneg)
+        function set_wave(self, peak, location, condition, number, display_handle, posneg)
             
             % prepare NaNs (otherwise will be filled with zeros)
             self.wave_amp(end+1:condition, :, posneg) = NaN;
@@ -414,7 +430,8 @@ classdef ABRData < ExperimentalData
             self.wave_amp(condition, number, posneg) = peak;
             self.wave_lat(condition, number, posneg) = location;
 
-            self.save_to_file(button_handle);
+            display_handle.mark_save_button;
+            self.save_to_file(display_handle);
         end
         
         function fid = print_data_table(self, toFile, fid)

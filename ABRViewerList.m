@@ -279,7 +279,7 @@ classdef ABRViewerList < ABRViewerBase
             for idx = 1:length(file_list)
                 data = ABRData(fullfile(self.get_path_name, file_list{idx}));
                 data.threshold_criterion = self.display_window.get_criterion;
-                thr = data.estimate_threshold;
+                thr = data.estimate_threshold(self.display_window);
                 tokens = regexp(file_list{idx}, 'datafile_(\d{4}-\d{2}-\d{2})-(\d{2}-\d{2}-\d{2})[-_]([^_-]+)[-_]([^_-]+)[-_]([^_-]+).*\.mat', 'tokens');
                 if isempty(tokens)
                     tokens{1}={'','','','',''};
