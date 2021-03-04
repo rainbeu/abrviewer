@@ -25,7 +25,7 @@
 %
 %
 %
-% ABRViewer by Rainer Beutelmann, Universität Oldenburg is licensed under CC BY-SA 4.0
+% ABRViewer by Rainer Beutelmann (Universität Oldenburg) is licensed under CC BY-SA 4.0
 %
 % <a href="https://gitlab.uni-oldenburg.de/teer6901/abrviewer">Download</a>
 % <a href="https://uol.de/suche/person?username=RBeutelmann2">Support</a>

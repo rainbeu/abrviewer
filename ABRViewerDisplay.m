@@ -2,7 +2,7 @@ classdef ABRViewerDisplay < ABRViewerBase
 %ABRVIEWERDISPLAY   Displays the waveforms and analysis tools
 %
 %
-% ABRViewer by Rainer Beutelmann, Universität Oldenburg is licensed under CC BY-SA 4.0
+% ABRViewer by Rainer Beutelmann (Universität Oldenburg) is licensed under CC BY-SA 4.0
 %
     properties (Access = protected)
         figure_tag = 'ABR_viewer_display'

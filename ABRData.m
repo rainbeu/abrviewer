@@ -2,7 +2,7 @@ classdef ABRData < ExperimentalData
 %ABRDATA    Class for ABR data, derived from ExperimentalData 
 %
 %
-% ABRViewer by Rainer Beutelmann, Universität Oldenburg is licensed under CC BY-SA 4.0
+% ABRViewer by Rainer Beutelmann (Universität Oldenburg) is licensed under CC BY-SA 4.0
 % 
     properties (Access = public)
         % dimensions are: condition (size(ABR,1)), wave nr, pos=1 neg=2
