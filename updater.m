@@ -1,5 +1,9 @@
 function updater
-    
+%UPDATER    Downloads the latest release version of ABRViewer
+%
+%
+% ABRViewer by Rainer Beutelmann, Universität Oldenburg is licensed under CC BY-SA 4.0
+% 
     [status, result] = system('git --version');
     
     if status ~= 0 || ~contains(result, 'git version')

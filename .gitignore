@@ -5,3 +5,7 @@ mousecallbacktest.m
 cost.m
 knowles_transfer.png
 bootstrap.m
+*.txt
+*.xlsx
+resources/
+test/

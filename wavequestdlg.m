@@ -1,4 +1,9 @@
 classdef wavequestdlg < handle
+%WAVEQUESTDLG   Asks for ABR wave number (to tag waveform amplitude/latency)
+%
+%
+% ABRViewer by Rainer Beutelmann, Universität Oldenburg is licensed under CC BY-SA 4.0
+% 
 
     properties (GetAccess = public, SetAccess = private)
         number = NaN

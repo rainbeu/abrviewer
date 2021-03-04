@@ -1,7 +1,9 @@
 classdef ABRViewerList < ABRViewerBase
-    %ABRViewerList
-    %
-    
+%ABRVIEWERLIST    Displays the ABRViewer file list
+%
+%
+% ABRViewer by Rainer Beutelmann, Universität Oldenburg is licensed under CC BY-SA 4.0
+%
     properties (Access = protected)
         figure_tag = 'ABR_viewer_list'
         config_file_name = './abrviewer_defaults.mat'

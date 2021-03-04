@@ -1,7 +1,9 @@
 classdef ABRViewerBase < handle
-    %ABRViewerBase
-    %   base class for ABRViewerList and ABRViewerDisplay
-    
+%ABRVIEWERBASE  Base class for ABRViewerList and ABRViewerDisplay
+%
+%
+% ABRViewer by Rainer Beutelmann, Universität Oldenburg is licensed under CC BY-SA 4.0
+%  
     properties (Abstract = true, Access = protected)
         figure_tag
     end

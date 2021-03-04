@@ -1,8 +1,9 @@
 classdef ABRData < ExperimentalData
-    %ABRData
-    %   Class for storage and display of ABR recordings
-    
-    
+%ABRDATA    Class for ABR data, derived from ExperimentalData 
+%
+%
+% ABRViewer by Rainer Beutelmann, Universität Oldenburg is licensed under CC BY-SA 4.0
+% 
     properties (Access = public)
         % dimensions are: condition (size(ABR,1)), wave nr, pos=1 neg=2
         wave_amp
