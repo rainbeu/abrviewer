@@ -1,6 +1,6 @@
 % ABR waveform viewer and analysis tool 
 % Version 0.9 04-Mar-2021
-%
+% Copyright 2021 Rainer Beutelmann, Universität Oldenburg
 %
 % ABRViewer Main Classes
 %   ABRViewer                  - ABR waveform viewer and analysis tool

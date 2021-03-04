@@ -2,6 +2,7 @@ classdef ExperimentalData < matlab.mixin.Copyable
 %EXPERIMENTALDATA   Base class for generic experimental data
 %
 %
+% Copyright 2021 Rainer Beutelmann, Universität Oldenburg
 % ABRViewer by Rainer Beutelmann (Universität Oldenburg) is licensed under CC BY-SA 4.0
 % 
 

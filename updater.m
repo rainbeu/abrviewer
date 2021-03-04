@@ -2,6 +2,7 @@ function updater
 %UPDATER    Downloads the latest release version of ABRViewer
 %
 %
+% Copyright 2021 Rainer Beutelmann, Universität Oldenburg
 % ABRViewer by Rainer Beutelmann (Universität Oldenburg) is licensed under CC BY-SA 4.0
 % 
     [status, result] = system('git --version');

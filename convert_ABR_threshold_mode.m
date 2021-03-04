@@ -2,6 +2,7 @@ function convert_ABR_threshold_mode(filename)
 %CONVERT_ABR_THRESHOLD_MODE     Converts binaurally (L/R/B) measured ABR threshold file
 %
 %
+% Copyright 2021 Rainer Beutelmann, Universität Oldenburg
 % ABRViewer by Rainer Beutelmann (Universität Oldenburg) is licensed under CC BY-SA 4.0
 % 
 
