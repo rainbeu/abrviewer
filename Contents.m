@@ -16,7 +16,7 @@
 %   wavequestdlg               - Asks for ABR wave number (to tag waveform amplitude/latency)
 %
 % Version Control Utilities
-%   bootstrap                  - Initializes Git version control and download ABRViewer
+%   bootstrap                  - Initializes Git version control and downloads ABRViewer
 %   updater                    - Downloads the latest release version of ABRViewer
 %
 % Data Crawler Tool for Summarizing Folder Hierarchy
@@ -31,5 +31,6 @@
 % <a href="https://uol.de/suche/person?username=RBeutelmann2">Support</a>
 % <a href="http://creativecommons.org/licenses/by-sa/4.0/">License</a>
 %
+
 
 
