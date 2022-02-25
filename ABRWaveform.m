@@ -13,6 +13,7 @@ classdef ABRWaveform < handle
         lineHandle matlab.graphics.primitive.Line
         markerHandles matlab.graphics.primitive.Line
         yOffset double
+        color 
     end
     
     methods
@@ -31,12 +32,14 @@ classdef ABRWaveform < handle
             obj.ABR = p.Results.ABR;
             obj.parameter = p.Results.parameter;
             obj.label = p.Results.label;
+            obj.color = rand(1,3);
+            obj.yOffset = 0;
         end
         
         function delete(obj)
             delete(obj.lineHandle);
             delete(obj.markerHandles);
-            if ~isempty(obj.parent)
+            if ~isempty(obj.parent) && isvalid(obj.parent)
                 obj.parent.removeWaveform(obj);
             end
         end
@@ -61,8 +64,20 @@ classdef ABRWaveform < handle
         function setParent(obj, parent)
             obj.parent = parent;
         end
+
+        function updateGraph(obj)
+            hax = obj.parent.getAxes;
+            if isempty(obj.lineHandle) || ~ishandle(obj.lineHandle)
+                obj.createGraph(hax);
+            end
+            set(obj.lineHandle, ...
+                'XData', obj.time, ...
+                'YData', obj.ABR + obj.yOffset, ...
+                'Color', obj.color);
+        end
         
-        function createGraph(obj)
+        function createGraph(obj, hax)
+            obj.lineHandle = line(hax);
         end
         
     end

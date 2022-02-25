@@ -2,17 +2,20 @@ classdef ABRWaveformCollection < handle
     
     properties
         waveforms (:,1) ABRWaveform
+        parent
     end
     
     methods
         
         function obj = ABRWaveformCollection(varargin)
+            p = inputParser;
+            p.addParameter('parent', obj.parent);
+            p.parse(varargin{:});
+            
+            obj.parent = p.Results.parent;
         end
         
         function delete(obj)
-            for n = 1:length(obj.waveforms)
-                obj.waveforms(n).setParent([]);
-            end
         end
         
     end
@@ -25,16 +28,16 @@ classdef ABRWaveformCollection < handle
         end
         
         function removeWaveform(obj, wf)
-            idx = find(ismember(obj.waveforms, wf));
-            obj.removeWaveformNr(idx);
+            obj.removeWaveformNr(find(ismember(obj.waveforms, wf)));
         end
         
         function removeWaveformNr(obj, nr)
             for n = 1:length(nr)
-                obj.waveforms(nr(n)).setParent([]);
-                obj.waveforms(nr(n)) = [];
-                nr(nr>nr(nr)) = nr(nr>nr(nr)) - 1; 
+                if isvalid(obj.waveforms(nr(n)))
+                    obj.waveforms(nr(n)).setParent([]);
+                end
             end
+            obj.waveforms(nr) = [];
         end        
         
         function merge(obj, wfc)
@@ -61,6 +64,23 @@ classdef ABRWaveformCollection < handle
         
         function parameters = getparameters(obj)
             parameters = cat(2, obj.waveforms.parameter);
+        end
+        
+        function updateWaveforms(obj)
+            for n = 1:length(obj.waveforms)
+                obj.waveforms(n).updateGraph;
+            end
+        end
+        
+        function hax = getAxes(obj)
+            if isempty(obj.parent) || ~isvalid(obj.parent)
+                hax = gca;
+            else
+                hax = obj.parent.getAxes;
+                if isempty(hax)
+                    hax = gca;
+                end
+            end
         end
         
     end

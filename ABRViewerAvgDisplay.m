@@ -12,7 +12,7 @@ classdef ABRViewerAvgDisplay < ABRViewerBase
     properties (Access = private)
         axes_handle
         param_figure_handle (1,1) ABRViewerParamList
-        wfcoll (1,1) ABRWaveformCollection
+        wfcoll (:,1) ABRWaveformCollection
     end
     
     properties (Access = private)
@@ -26,7 +26,7 @@ classdef ABRViewerAvgDisplay < ABRViewerBase
     methods
         
         function obj = ABRViewerAvgDisplay
-            obj.wfcoll = ABRWaveformCollection;
+            obj.wfcoll = ABRWaveformCollection('parent', obj);
         end
         
         function delete(obj)
@@ -51,6 +51,10 @@ classdef ABRViewerAvgDisplay < ABRViewerBase
             obj.updateDisplay;
         end
         
+        function hax = getAxes(obj)
+            hax = obj.axes_handle;
+        end
+        
     end    
     
     methods
@@ -72,6 +76,7 @@ classdef ABRViewerAvgDisplay < ABRViewerBase
                 'position', [167    12   148    43], 'menubar', 'none',  ...
                 'WindowButtonDownFcn', @(src, evt)self.mouse_click_callback(src, evt), ...
                 'name', 'ABR Average Display');
+            set(the_handle, 'menubar', 'figure');
         end
         
         function create_figure_controls(self)
@@ -94,6 +99,7 @@ classdef ABRViewerAvgDisplay < ABRViewerBase
         end
         
         function updateDisplay(obj)
+            obj.wfcoll.updateWaveforms;
         end
         
     end
