@@ -19,12 +19,15 @@ classdef ABRViewerList < ABRViewerBase
         print_handle
         export_handle
         print_thr_handle
+        average_handle
     end
     
     properties (Access = private)
         display_window(:, 1) ABRViewerDisplay
+        average_window(:, 1) ABRViewerAvgDisplay
         data(:, 1) ABRData
         main_entry(1, 1) double
+        inhibit_update (1, 1) logical = false
     end
     
     methods
@@ -78,8 +81,11 @@ classdef ABRViewerList < ABRViewerBase
                 'position', [0.5125 0.025 0.1875 0.045], 'tag', 'next', 'string', 'export list', ...
                 'callback', @(src,evt)self.export_callback(src, evt));
             self.print_thr_handle = uicontrol(self.figure_handle, 'style', 'pushbutton', 'units', 'normalized', ...
-                'position', [0.30 0.08 0.4 0.045], 'tag', 'next', 'string', 'print thresholds', ...
+                'position', [0.30 0.08 0.1875 0.045], 'tag', 'next', 'string', 'print thresholds', ...
                 'callback', @(src,evt)self.print_thr_callback(src, evt));
+            self.average_handle = uicontrol(self.figure_handle, 'style', 'togglebutton', 'units', 'normalized', ...
+                'position', [0.5125 0.08 0.1875 0.045], 'tag', 'average', 'string', 'average', ...
+                'callback', @(src,evt)self.average_callback(src, evt));
         end
     end
     
@@ -94,6 +100,8 @@ classdef ABRViewerList < ABRViewerBase
             end
             set(self.path_handle, 'string', path);
             set(self.listbox_handle, 'string', files);
+            set(self.listbox_handle, 'Value', 1);
+            self.update_display;
         end
         
         function load_config_file(self)
@@ -207,9 +215,11 @@ classdef ABRViewerList < ABRViewerBase
         end
         
         function update_display(self)
-            self.load_files;
-            self.display_window.update_data(self.data(self.get_current_positions), self.get_main_position);
-            self.display_window.criterion_callback;
+            if ~self.inhibit_update
+                self.load_files;
+                self.display_window.update_data(self.data(self.get_current_positions), self.get_main_position);
+                self.display_window.criterion_callback;
+            end
         end
         
     end
@@ -312,6 +322,50 @@ classdef ABRViewerList < ABRViewerBase
             end
             fprintf('\n\n');
             fprintf('--- END automatically estimated thresholds ---\n\n');
+        end
+        
+        function average_callback(self, source, event)
+            if ~get(source, 'Value')
+                if ishandle(self.average_window)
+                    delete(self.average_window);
+                end
+                % re-enable other UI elements
+                set([self.overlay_handle
+                        self.previous_handle
+                        self.next_handle
+                        self.print_handle
+                        self.export_handle
+                        self.print_thr_handle], 'Enable', 'on');
+                overlay_callback(self, [], []);
+                self.inhibit_update = false;
+                set(self.listbox_handle, 'Callback', @(src,evt)self.listbox_callback(src, evt));
+            else
+                % disable other UI elements
+                set([self.overlay_handle
+                         self.previous_handle
+                         self.next_handle
+                         self.print_handle
+                         self.export_handle
+                         self.print_thr_handle], 'Enable', 'on');
+                % make multi-selection possible
+                self.inhibit_update = true;
+                set(self.listbox_handle, 'Callback', @(src,evt)self.average_update_list(src, evt));
+                set(self.listbox_handle, 'Min', 0);
+                set(self.listbox_handle, 'Value', self.get_main_position);
+                set(self.listbox_handle, 'Max', 2);
+                % create average display window
+                self.average_window = ABRViewerAvgDisplay;
+                self.average_update_list([], []);
+            end
+        end
+        
+        function average_update_list(self, src, evt)
+            item = get(self.listbox_handle, 'Value');
+            if length(item) == 1
+                self.main_entry = item;
+            end
+            self.load_files;
+            self.average_window.updateData(self.data(self.get_current_positions));
         end
         
         function close_request(self, source, event)

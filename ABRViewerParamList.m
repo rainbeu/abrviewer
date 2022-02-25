@@ -1,5 +1,5 @@
-classdef ABRViewerParamDisplay < ABRViewerBase
-%ABRVIEWERPARAMDISPLAY   Displays the averaged waveforms
+classdef ABRViewerParamList < ABRViewerBase
+%ABRVIEWERPARAMLIST   Displays the averaged waveforms
 %
 %
 % Copyright 2022 Rainer Beutelmann, Universität Oldenburg
@@ -21,10 +21,22 @@ classdef ABRViewerParamDisplay < ABRViewerBase
     
     methods
         
-        function obj = ABRViewerParamDisplay
+        function obj = ABRViewerParamList
         end
         
         function delete(obj)
+        end
+        
+        function updateLists(obj, labels, parameters)
+            labels = unique(labels);
+            oldLabels = get(obj.label_handle, 'String');
+            set(obj.label_handle, 'String', labels);
+            set(obj.label_handle, 'Value', find(ismember(labels, oldLabels)));
+
+            parameters = unique(parameters);
+            oldParameters = double(get(obj.param_handle, 'String'));
+            set(obj.param_handle, 'String', num2str(parameters(:)));
+            set(obj.param_handle, 'Value', find(ismember(parameters, oldParameters)));
         end
         
     end
@@ -42,10 +54,10 @@ classdef ABRViewerParamDisplay < ABRViewerBase
         function create_figure_controls(self)
             self.label_handle = uicontrol(self.figure_handle, 'style', 'listbox', 'units', 'normalized', ...
                 'position', [0.05 0.18 0.4 0.76], 'tag', 'list', ...
-                'callback', @(src,evt)self.label_callback(src, evt), 'min', 0, 'max', 1);
+                'callback', @(src,evt)self.label_callback(src, evt), 'min', 0, 'max', 2);
             self.param_handle = uicontrol(self.figure_handle, 'style', 'listbox', 'units', 'normalized', ...
                 'position', [0.55 0.18 0.4 0.76], 'tag', 'list', ...
-                'callback', @(src,evt)self.param_callback(src, evt), 'min', 0, 'max', 1);
+                'callback', @(src,evt)self.param_callback(src, evt), 'min', 0, 'max', 2);
             
         end
         

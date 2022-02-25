@@ -26,10 +26,41 @@ classdef ABRWaveformCollection < handle
         
         function removeWaveform(obj, wf)
             idx = find(ismember(obj.waveforms, wf));
-            for n = 1:length(idx)
-                obj.waveforms(idx(n)).setParent([]);
-                obj.waveforms(idx(n)) = [];
+            obj.removeWaveformNr(idx);
+        end
+        
+        function removeWaveformNr(obj, nr)
+            for n = 1:length(nr)
+                obj.waveforms(nr(n)).setParent([]);
+                obj.waveforms(nr(n)) = [];
+                nr(nr>nr(nr)) = nr(nr>nr(nr)) - 1; 
             end
+        end        
+        
+        function merge(obj, wfc)
+            for n = 1:length(wfc.waveforms)
+                if ~ismember(wfc.waveforms(n), obj.waveforms)
+                    obj.addWaveform(wfc.waveforms(n));
+                end
+            end
+        end
+        
+        function purge(obj, wfc)
+            toRemove = [];
+            for n = 1:length(obj.waveforms)
+                if ~ismember(obj.waveforms(n), wfc.waveforms)
+                    toRemove = [toRemove; n];
+                end
+            end
+            obj.removeWaveformNr(toRemove);
+        end
+        
+        function labels = getlabels(obj)
+            labels = cat(2, obj.waveforms.label);
+        end
+        
+        function parameters = getparameters(obj)
+            parameters = cat(2, obj.waveforms.parameter);
         end
         
     end

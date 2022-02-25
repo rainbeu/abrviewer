@@ -11,7 +11,8 @@ classdef ABRViewerAvgDisplay < ABRViewerBase
     
     properties (Access = private)
         axes_handle
-        param_figure_handle (1,1) ABRViewerParamDisplay
+        param_figure_handle (1,1) ABRViewerParamList
+        wfcoll (1,1) ABRWaveformCollection
     end
     
     properties (Access = private)
@@ -25,12 +26,32 @@ classdef ABRViewerAvgDisplay < ABRViewerBase
     methods
         
         function obj = ABRViewerAvgDisplay
+            obj.wfcoll = ABRWaveformCollection;
         end
         
         function delete(obj)
         end
         
     end
+    
+    
+    
+    methods (Access = public)
+        
+        function updateData(obj, data)
+            wfc = ABRWaveformCollection;
+            for n = 1:length(data)
+                wfc.merge(data(n).getWaveformCollection);
+            end
+            % add new files
+            obj.wfcoll.merge(wfc);
+            % remove deselected files
+            obj.wfcoll.purge(wfc);
+            obj.updateLists;
+            obj.updateDisplay;
+        end
+        
+    end    
     
     methods
         
@@ -56,16 +77,23 @@ classdef ABRViewerAvgDisplay < ABRViewerBase
         function create_figure_controls(self)
             self.axes_handle = axes('parent', self.figure_handle, ...
                 'Box', 'on', 'BoxStyle', 'full');
-            self.param_figure_handle = ABRViewerParamDisplay;
+            self.param_figure_handle = ABRViewerParamList;
         end
         
         
     end
     
-    methods (Access = public)
+    methods (Access = private)
         
         function mouse_click_callback(self, src, evt)
 
+        end
+        
+        function updateLists(obj)
+            obj.param_figure_handle.updateLists(obj.wfcoll.getlabels, obj.wfcoll.getparameters);
+        end
+        
+        function updateDisplay(obj)
         end
         
     end

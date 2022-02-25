@@ -41,6 +41,19 @@ classdef ABRWaveform < handle
             end
         end
         
+        function iseq = eq(A, B)
+            if isempty(A) || isempty(B)
+                iseq = logical([]);
+            else
+                iseq = ...
+                    ~isempty([A.parameter]) & ~isempty([B.parameter]) ...
+                    & ~isempty([A.label]) & ~isempty([B.label]) ...
+                    & [A.parameter] == [B.parameter] ...
+                    & [A.label] == [B.label];
+                iseq = iseq(:);
+            end
+        end
+        
     end
     
     methods (Access = public)
