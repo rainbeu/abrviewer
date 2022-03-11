@@ -6,6 +6,7 @@ classdef ABRWaveform < handle
         parameter double
         label string
         id uint32
+        maxAmp double
     end
     
     properties (Access = private)
@@ -30,9 +31,10 @@ classdef ABRWaveform < handle
             obj.parent = p.Results.parent;
             obj.time = p.Results.time;
             obj.ABR = p.Results.ABR;
+            obj.maxAmp = max(abs(obj.ABR));
             obj.parameter = p.Results.parameter;
             obj.label = p.Results.label;
-            obj.color = rand(1,3);
+            obj.color = hsv2rgb(rand(1), (1+rand(1))/2, (1+rand(1))/2);
             obj.yOffset = 0;
         end
         
@@ -65,19 +67,32 @@ classdef ABRWaveform < handle
             obj.parent = parent;
         end
 
+        function mx = setOffset(obj, offset)
+            obj.yOffset = offset;
+            mx = obj.maxAmp;
+        end
+        
         function updateGraph(obj)
             hax = obj.parent.getAxes;
             if isempty(obj.lineHandle) || ~ishandle(obj.lineHandle)
                 obj.createGraph(hax);
             end
             set(obj.lineHandle, ...
-                'XData', obj.time, ...
+                'XData', obj.time/1e-3, ...
                 'YData', obj.ABR + obj.yOffset, ...
                 'Color', obj.color);
         end
         
         function createGraph(obj, hax)
             obj.lineHandle = line(hax);
+        end
+        
+        function switchGraph(obj, state)
+            if state 
+                set(obj.lineHandle, 'Visible', 'on');
+            else
+                set(obj.lineHandle, 'Visible', 'off');
+            end
         end
         
     end

@@ -11,7 +11,7 @@ classdef ABRViewerAvgDisplay < ABRViewerBase
     
     properties (Access = private)
         axes_handle
-        param_figure_handle (1,1) ABRViewerParamList
+        param_figure_handle (:,1) ABRViewerParamList
         wfcoll (:,1) ABRWaveformCollection
     end
     
@@ -27,9 +27,11 @@ classdef ABRViewerAvgDisplay < ABRViewerBase
         
         function obj = ABRViewerAvgDisplay
             obj.wfcoll = ABRWaveformCollection('parent', obj);
+            obj.param_figure_handle = ABRViewerParamList('parent', obj);
         end
         
         function delete(obj)
+            delete(obj.param_figure_handle);
         end
         
     end
@@ -53,6 +55,16 @@ classdef ABRViewerAvgDisplay < ABRViewerBase
         
         function hax = getAxes(obj)
             hax = obj.axes_handle;
+        end
+        
+        function update(obj)
+            obj.updateDisplay;
+        end
+        
+        function setTicks(obj, params, ticks)
+            set(obj.axes_handle, 'YTick', ticks, 'YTickLabel', params);
+            set(obj.axes_handle, 'XTick', -100:100);
+            set(obj.axes_handle, 'XGrid', 'on', 'YGrid', 'on');
         end
         
     end    
@@ -99,8 +111,10 @@ classdef ABRViewerAvgDisplay < ABRViewerBase
         end
         
         function updateDisplay(obj)
-            obj.wfcoll.updateWaveforms;
+            [labels, parameters] = obj.param_figure_handle.getSelection;
+            obj.wfcoll.updateWaveforms(labels, parameters);
         end
+        
         
     end
 

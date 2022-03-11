@@ -55,7 +55,9 @@ classdef ABRWaveformCollection < handle
                     toRemove = [toRemove; n];
                 end
             end
-            obj.removeWaveformNr(toRemove);
+            if ~isempty(toRemove)
+                obj.removeWaveformNr(toRemove);
+            end
         end
         
         function labels = getlabels(obj)
@@ -66,9 +68,16 @@ classdef ABRWaveformCollection < handle
             parameters = cat(2, obj.waveforms.parameter);
         end
         
-        function updateWaveforms(obj)
+        function updateWaveforms(obj, labels, parameters)
+            obj.setSpacing(1);
             for n = 1:length(obj.waveforms)
-                obj.waveforms(n).updateGraph;
+                if    ismember(obj.waveforms(n).label, labels) ...
+                   && ismember(obj.waveforms(n).parameter, parameters)
+                    obj.waveforms(n).updateGraph;
+                    obj.waveforms(n).switchGraph(true);
+                else
+                    obj.waveforms(n).switchGraph(false);
+                end
             end
         end
         
@@ -81,6 +90,23 @@ classdef ABRWaveformCollection < handle
                     hax = gca;
                 end
             end
+        end
+        
+        function setSpacing(obj, ratio)
+            parameters = obj.getparameters;
+            P = unique(parameters);
+            step = 0;
+            ticks = [];
+            for n = length(P):-1:1
+                idx = find(ismember(parameters, P(n)));
+                mx = 0;
+                for k = 1:length(idx)
+                    mx = max(mx, obj.waveforms(n).setOffset(step));
+                end
+                ticks(n) = step;
+                step = step - ratio * mx;
+            end
+            obj.parent.setTicks(P, ticks);
         end
         
     end

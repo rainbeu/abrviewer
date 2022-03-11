@@ -501,9 +501,10 @@ classdef ABRData < ExperimentalData
         function WFC = getWaveformCollection(obj)
             WFC = ABRWaveformCollection;
             data = obj.get_filtered_data;
+            [~, label] = fileparts(obj.file_name);
             for n = 1:size(data, 2)
                 WFC.addWaveform(ABRWaveform('time', obj.time, ...
-                    'ABR', data(:,n), 'label', obj.file_name, ...
+                    'ABR', data(:,n), 'label', label, ...
                     'parameter', obj.parameters(n)));
             end
         end
