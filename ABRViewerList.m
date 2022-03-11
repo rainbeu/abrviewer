@@ -338,7 +338,11 @@ classdef ABRViewerList < ABRViewerBase
                         self.print_thr_handle], 'Enable', 'on');
                 overlay_callback(self, [], []);
                 self.inhibit_update = false;
+                set(self.listbox_handle, 'Value', self.get_current_positions);
+                set(self.listbox_handle, 'Min', 0);
+                set(self.listbox_handle, 'Max', 1);
                 set(self.listbox_handle, 'Callback', @(src,evt)self.listbox_callback(src, evt));
+                self.listbox_callback([], []);
             else
                 % disable other UI elements
                 set([self.overlay_handle
@@ -351,7 +355,6 @@ classdef ABRViewerList < ABRViewerBase
                 self.inhibit_update = true;
                 set(self.listbox_handle, 'Callback', @(src,evt)self.average_update_list(src, evt));
                 set(self.listbox_handle, 'Min', 0);
-                set(self.listbox_handle, 'Value', self.get_main_position);
                 set(self.listbox_handle, 'Max', 2);
                 % create average display window
                 self.average_window = ABRViewerAvgDisplay;
