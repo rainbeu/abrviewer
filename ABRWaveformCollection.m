@@ -101,7 +101,7 @@ classdef ABRWaveformCollection < handle
                 idx = find(ismember(parameters, P(n)));
                 mx = 0;
                 for k = 1:length(idx)
-                    mx = max(mx, obj.waveforms(n).setOffset(step));
+                    mx = max(mx, obj.waveforms(idx(k)).setOffset(step));
                 end
                 ticks(n) = step;
                 step = step - ratio * mx;
