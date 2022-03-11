@@ -72,6 +72,10 @@ classdef ABRWaveform < handle
             mx = obj.maxAmp;
         end
         
+        function mx = setColor(obj, color)
+            obj.color = color;
+        end
+        
         function updateGraph(obj)
             hax = obj.parent.getAxes;
             if isempty(obj.lineHandle) || ~ishandle(obj.lineHandle)

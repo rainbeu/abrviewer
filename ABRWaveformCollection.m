@@ -70,6 +70,7 @@ classdef ABRWaveformCollection < handle
         
         function updateWaveforms(obj, labels, parameters)
             obj.setSpacing(1);
+            obj.setColors;
             for n = 1:length(obj.waveforms)
                 if    ismember(obj.waveforms(n).label, labels) ...
                    && ismember(obj.waveforms(n).parameter, parameters)
@@ -107,6 +108,18 @@ classdef ABRWaveformCollection < handle
                 step = step - ratio * mx;
             end
             obj.parent.setTicks(P, ticks);
+        end
+        
+        function setColors(obj)
+            labels = obj.getlabels;
+            L = unique(labels);
+            for n = 1:length(L)
+                color = rand(1,3);
+                idx = find(ismember(labels, L(n)));
+                for k = 1:length(idx)
+                    obj.waveforms(idx(k)).setColor(color);
+                end
+            end
         end
         
     end
