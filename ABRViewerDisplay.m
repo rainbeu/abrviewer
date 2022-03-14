@@ -352,9 +352,14 @@ classdef ABRViewerDisplay < ABRViewerBase
             time = self.data(idx).get_time;
             ABR = self.data(idx).get_filtered_data;
             hp = plot(self.axes_handle, time/1e-3, ABR + self.offsets(pos));
-            [~, order] = sort(cellfun(@mean, get(hp, 'YData')));
-            hp = hp(order);
+            if length(hp) > 1
+                [~, order] = sort(cellfun(@mean, get(hp, 'YData')));
+                hp = hp(order);
+            end
             cmap = squeeze(hsv2rgb((0:length(hp)-1).'/length(hp),1*ones(length(hp),1),0.7*ones(length(hp),1)));
+            if size(cmap, 2) ~= 3
+                cmap = cmap.';
+            end
             for k = 1:length(hp)
                 set(hp(k), 'UserData', [idx k], 'Tag', 'ABR', 'Color', cmap(k, :));
             end
@@ -381,19 +386,37 @@ classdef ABRViewerDisplay < ABRViewerBase
             pos = ismember(self.parameters, params);
             time = self.data(idx).get_time;
             thr =  self.data(idx).estimate_threshold(self);
-            hl = line(self.axes_handle, [min(time);max(time)]/1e-3, [1;1]*interp1(params, self.offsets(pos), thr), ...
-                     'color', [0.6 0.6 0.6],'linewidth',2);
-            text(self.axes_handle, min(get(self.axes_handle,'XLim'))-1, interp1(params, self.offsets(pos), thr), sprintf('%1.1f', thr));
-            if is_main
-                set(hl, 'linestyle', '-');
-            else
-                switch idx
-                    case 1
-                        set(hl, 'linestyle', ':');
-                    case 2
-                        set(hl, 'linestyle', '--');
-                    case 3
-                        set(hl, 'linestyle', '-.');
+            if length(params) > 1
+                if ~isnan(thr)
+                    if ~isinf(thr)
+                        hl = line(self.axes_handle, [min(time);max(time)]/1e-3, [1;1]*interp1(params, self.offsets(pos), thr), ...
+                                 'color', [0.6 0.6 0.6],'linewidth',2);
+                        text(self.axes_handle, min(get(self.axes_handle,'XLim'))-1, interp1(params, self.offsets(pos), thr), sprintf('%1.1f', thr));
+                        if is_main
+                            set(hl, 'linestyle', '-');
+                        else
+                            switch idx
+                                case 1
+                                    set(hl, 'linestyle', ':');
+                                case 2
+                                    set(hl, 'linestyle', '--');
+                                case 3
+                                    set(hl, 'linestyle', '-.');
+                            end
+                        end
+                    else
+                        if thr == -Inf
+                            text(self.axes_handle, ...
+                                 min(get(self.axes_handle,'XLim'))-1, ...
+                                 min(get(self.axes_handle,'YLim')), ...
+                                 sprintf('thr↓'));
+                        else
+                            text(self.axes_handle, ...
+                                 min(get(self.axes_handle,'XLim'))-1, ...
+                                 max(get(self.axes_handle,'YLim')), ...
+                                 sprintf('thr↑'));
+                        end
+                    end
                 end
             end
         end
@@ -494,7 +517,7 @@ classdef ABRViewerDisplay < ABRViewerBase
         
         function plot_legend(self)
             tmp = regexp({self.data.file_name},'-[0-9]+_([_A-Za-z0-9 ]+).mat','tokens');
-            if length(self.legend_handles) > 1
+            if length(self.legend_handles) > 1 && all(~cellfun(@isempty, tmp))
                 legend(self.legend_handles, cellfun(@(x)x{1},tmp,'UniformOutput',true), 'Interpreter', 'none');
             else
                 delete(findall(self.figure_handle, 'type', 'legend'));

@@ -321,117 +321,122 @@ classdef ABRData < ExperimentalData
         function thr = estimate_threshold(self, display_handle)
             %%%% hier heftig aufräumen!!!
             time_limits = [0.5e-3 4.5e-3];
-            
+
             waveforms = self.get_filtered_data;
-            idx = self.time >min(time_limits) & self.time < max(time_limits);
-            XC = zeros(2*sum(idx)-1, size(waveforms,2)-1);
-            for k = 1:size(waveforms ,2)-1
-%                 CC(k,1) = corr(waveforms(idx,k+1),waveforms(idx,k));
-                [XC(:,k), lg] = xcorr(waveforms(idx,k+1),waveforms(idx,k),'coeff');
-            end
-            t = lg/self.fs;
-            CC = max(-1,max(XC(t>=-0.4e-3&t<=0e-3,:))).';
             
-            L = self.get_parameters;
-            L = L(1:end-1);
-            L = L(:);
-            
-            if length(L) >= 4 
-                ps = lsqcurvefit(@(p,x)p(1)+(p(2)-p(1))./(1+10.^(p(4)*(p(3)-x))),...
-                                [0 1 50 0.1],...
-                                L,...
-                                CC,...
-                                [0 self.threshold_criterion min(L) 0.005],...
-                                [self.threshold_criterion 1 max(L) 0.999],...
-                                optimset('Display','none'));
-                pp = lsqcurvefit(@(p,x)p(1)*x.^p(2)+p(3),...
-                                [1 1 0],...
-                                L,...
-                                CC,...
-                                [0 0 -inf],...
-                                [inf inf inf],...
-                                optimset('Display','none'));
-
-                fit_sigm = ps(1)+(ps(2)-ps(1))./(1+10.^(ps(4)*(ps(3)-L)));
-                fit_power = pp(1)*L.^pp(2)+pp(3);
-
-                RMSs = rms(fit_sigm-CC);
-                RMSp = rms(fit_power-CC);
-                R2p = corr((fit_power),(CC))^2;
-
-                thrs = ps(3)-log10((ps(2)-ps(1))./(self.threshold_criterion-ps(1))-1)/ps(4);
-                thrp = ((self.threshold_criterion-pp(3))/pp(1))^(1/pp(2));
-                
-            else % not enough data points
-                
-                ps = nan(1,4);
-                pp = nan(1,4);
-                
-                RMSs = NaN;
-                RMSp = NaN;
-                R2p = NaN;
-                
-                thrs = NaN;
-                thrp = NaN;
-                
-            end
-            
-%             figure
-%             subplot(1,5,[1 2 3 4]);
-%             plot(self.time, waveforms+(0:size(self.ABR,2)-1), self.time, 0.5*self.Mic./max(abs(self.Mic))+(0:size(self.ABR,2)-1));
-%             set(gca,'ytick',(0:size(self.ABR,2)-1),'YTickLabel', L);
-%             ylim([-1 size(self.ABR,2)]);
-%             line([1;1]*time_limits, [-1;size(self.ABR,2)],'color','k');
-%             xlim([-0.004 0.015]);
-%             grid on
-%             subplot(1,5,5);
-%             l=(0:100).';
-%             plot(CC,L,'x',...
-%                  ps(1)+(ps(2)-ps(1))./(1+10.^(ps(4)*(ps(3)-l))),l,...
-%                  pp(1)*l.^pp(2)+pp(3),l...
-%                  )
-%             line([self.threshold_criterion 0 0;self.threshold_criterion 1 1],[0 thrs thrp;100 thrs thrp],'color','k','linestyle','--')
-%             ylim([min(L)-10 max(L)+10]);
-%             xlim([0 1]);
-%             grid on
-%             pause
-%             close
-            
-            if ps(1) < self.threshold_criterion && ps(2) > self.threshold_criterion && ps(4) > 0.005 && ps(4) < 0.999 && RMSs < RMSp && min(CC) < self.threshold_criterion
-                thr = thrs;
-            elseif R2p > 0.7 && max(CC) > self.threshold_criterion
-                thr = thrp;
-            else
-%                 ps
-%                 pp
-%                 RMSs
-%                 RMSp
-%                 R2p
-                thr = nan;
-                % or find the threshold by 
-                pre = find(CC<self.threshold_criterion, 1, 'last');
-                if pre == length(L)
-                    thr = +Inf;
-                elseif isempty(pre)
-                    thr = -Inf;
-                else
-                    thr = interp1(CC(pre:pre+1),L(pre:pre+1),self.threshold_criterion);
-                end                
-            end
-            
-            if thr < min(self.get_parameters) 
-                thr = -Inf;
-            elseif thr > max(self.get_parameters)
-                thr = +Inf;
-            end
-            
-            if isempty(self.current_thr) || thr ~= self.current_thr
-                self.current_thr = thr;
-                if ~isempty(display_handle) && isa(display_handle,'ABRViewerDisplay')
-                    display_handle.mark_save_button;
+            if size(waveforms, 2) >= 3 
+                idx = self.time >min(time_limits) & self.time < max(time_limits);
+                XC = zeros(2*sum(idx)-1, size(waveforms,2)-1);
+                for k = 1:size(waveforms ,2)-1
+    %                 CC(k,1) = corr(waveforms(idx,k+1),waveforms(idx,k));
+                    [XC(:,k), lg] = xcorr(waveforms(idx,k+1),waveforms(idx,k),'coeff');
                 end
+                t = lg/self.fs;
+                CC = max(-1,max(XC(t>=-0.4e-3&t<=0e-3,:))).';
+
+                L = self.get_parameters;
+                L = L(1:end-1);
+                L = L(:);
+
+                if length(L) >= 4 
+                    ps = lsqcurvefit(@(p,x)p(1)+(p(2)-p(1))./(1+10.^(p(4)*(p(3)-x))),...
+                                    [0 1 50 0.1],...
+                                    L,...
+                                    CC,...
+                                    [0 self.threshold_criterion min(L) 0.005],...
+                                    [self.threshold_criterion 1 max(L) 0.999],...
+                                    optimset('Display','none'));
+                    pp = lsqcurvefit(@(p,x)p(1)*x.^p(2)+p(3),...
+                                    [1 1 0],...
+                                    L,...
+                                    CC,...
+                                    [0 0 -inf],...
+                                    [inf inf inf],...
+                                    optimset('Display','none'));
+
+                    fit_sigm = ps(1)+(ps(2)-ps(1))./(1+10.^(ps(4)*(ps(3)-L)));
+                    fit_power = pp(1)*L.^pp(2)+pp(3);
+
+                    RMSs = rms(fit_sigm-CC);
+                    RMSp = rms(fit_power-CC);
+                    R2p = corr((fit_power),(CC))^2;
+
+                    thrs = ps(3)-log10((ps(2)-ps(1))./(self.threshold_criterion-ps(1))-1)/ps(4);
+                    thrp = ((self.threshold_criterion-pp(3))/pp(1))^(1/pp(2));
+
+                else % not enough data points
+
+                    ps = nan(1,4);
+                    pp = nan(1,4);
+
+                    RMSs = NaN;
+                    RMSp = NaN;
+                    R2p = NaN;
+
+                    thrs = NaN;
+                    thrp = NaN;
+
+                end
+
+    %             figure
+    %             subplot(1,5,[1 2 3 4]);
+    %             plot(self.time, waveforms+(0:size(self.ABR,2)-1), self.time, 0.5*self.Mic./max(abs(self.Mic))+(0:size(self.ABR,2)-1));
+    %             set(gca,'ytick',(0:size(self.ABR,2)-1),'YTickLabel', L);
+    %             ylim([-1 size(self.ABR,2)]);
+    %             line([1;1]*time_limits, [-1;size(self.ABR,2)],'color','k');
+    %             xlim([-0.004 0.015]);
+    %             grid on
+    %             subplot(1,5,5);
+    %             l=(0:100).';
+    %             plot(CC,L,'x',...
+    %                  ps(1)+(ps(2)-ps(1))./(1+10.^(ps(4)*(ps(3)-l))),l,...
+    %                  pp(1)*l.^pp(2)+pp(3),l...
+    %                  )
+    %             line([self.threshold_criterion 0 0;self.threshold_criterion 1 1],[0 thrs thrp;100 thrs thrp],'color','k','linestyle','--')
+    %             ylim([min(L)-10 max(L)+10]);
+    %             xlim([0 1]);
+    %             grid on
+    %             pause
+    %             close
+
+                if ps(1) < self.threshold_criterion && ps(2) > self.threshold_criterion && ps(4) > 0.005 && ps(4) < 0.999 && RMSs < RMSp && min(CC) < self.threshold_criterion
+                    thr = thrs;
+                elseif R2p > 0.7 && max(CC) > self.threshold_criterion
+                    thr = thrp;
+                else
+    %                 ps
+    %                 pp
+    %                 RMSs
+    %                 RMSp
+    %                 R2p
+                    thr = nan;
+                    % or find the threshold by 
+                    pre = find(CC<self.threshold_criterion, 1, 'last');
+                    if pre == length(L)
+                        thr = +Inf;
+                    elseif isempty(pre)
+                        thr = -Inf;
+                    else
+                        thr = interp1(CC(pre:pre+1),L(pre:pre+1),self.threshold_criterion);
+                    end                
+                end
+
+                if thr < min(self.get_parameters) 
+                    thr = -Inf;
+                elseif thr > max(self.get_parameters)
+                    thr = +Inf;
+                end
+
+                if isempty(self.current_thr) || thr ~= self.current_thr
+                    self.current_thr = thr;
+                    if ~isempty(display_handle) && isa(display_handle,'ABRViewerDisplay')
+                        display_handle.mark_save_button;
+                    end
+                end
+                self.save_to_file(display_handle);
+            else
+                thr = NaN;
             end
-            self.save_to_file(display_handle);
             
         end        
         
