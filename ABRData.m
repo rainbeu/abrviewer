@@ -324,7 +324,7 @@ classdef ABRData < ExperimentalData
 
             waveforms = self.get_filtered_data;
             
-            if size(size(waveforms ,2)) >= 3 
+            if size(waveforms, 2) >= 3 
                 idx = self.time >min(time_limits) & self.time < max(time_limits);
                 XC = zeros(2*sum(idx)-1, size(waveforms,2)-1);
                 for k = 1:size(waveforms ,2)-1
