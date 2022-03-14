@@ -1,4 +1,4 @@
-function updater
+function getpreview
 %UPDATER    Downloads the latest release version of ABRViewer
 %
 %
@@ -19,8 +19,8 @@ function updater
         fprintf('\n');
         syscall('git init');
         syscall('git remote add origin https://gitlab.uni-oldenburg.de/teer6901/abrviewer.git');
-        syscall('git fetch origin release');
-        syscall('git checkout -f release');
+        syscall('git fetch origin development');
+        syscall('git checkout -f development');
         syscall('git checkout -B local');
         fprintf('\n');
         fprintf('    git version control is ready to be used.\n');
@@ -30,7 +30,7 @@ function updater
         fprintf('    updating git version control\n');
         fprintf('\n');
         syscall('git checkout -B local');
-        syscall('git pull origin release');
+        syscall('git pull origin development');
         fprintf('\n');
         fprintf('============================================================\n');
     end
