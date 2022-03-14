@@ -30,7 +30,8 @@ function updater
         fprintf('    updating git version control\n');
         fprintf('\n');
         syscall('git checkout -B local');
-        syscall('git pull origin release');
+        syscall('git fetch origin release');
+        syscall('git reset --hard release');
         fprintf('\n');
         fprintf('============================================================\n');
     end

@@ -30,7 +30,8 @@ function getpreview
         fprintf('    updating git version control\n');
         fprintf('\n');
         syscall('git checkout -B local');
-        syscall('git pull origin development');
+        syscall('git fetch origin development');
+        syscall('git reset --hard development');
         fprintf('\n');
         fprintf('============================================================\n');
     end
