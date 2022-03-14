@@ -34,7 +34,7 @@ classdef ABRWaveformCollection < handle
         function removeWaveformNr(obj, nr)
             for n = 1:length(nr)
                 if isvalid(obj.waveforms(nr(n)))
-                    obj.waveforms(nr(n)).setParent([]);
+                    obj.waveforms(nr(n)).setParent(ABRWaveformCollection.empty);
                 end
             end
             obj.waveforms(nr) = [];

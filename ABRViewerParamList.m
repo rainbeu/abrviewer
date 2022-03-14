@@ -44,9 +44,10 @@ classdef ABRViewerParamList < ABRViewerBase
             end
 
             parameters = unique(parameters);
-            oldParameters = str2double(get(obj.param_handle, 'String'));
+            oldParameters = str2num(get(obj.param_handle, 'String'));
+            oldParameters = oldParameters(get(obj.param_handle, 'Value'));
             set(obj.param_handle, 'String', num2str(parameters(:)));
-            if ~isempty(oldParameters)
+            if ~isempty(oldParameters) && ~all(isnan(oldParameters))
                 set(obj.param_handle, 'Value', find(ismember(parameters, oldParameters)));
             else
                 set(obj.param_handle, 'Value', 1:length(parameters));
