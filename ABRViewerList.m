@@ -20,6 +20,8 @@ classdef ABRViewerList < ABRViewerBase
         export_handle
         print_thr_handle
         average_handle
+        merge_handle
+        mergebtn_handle
     end
     
     properties (Access = private)
@@ -65,7 +67,7 @@ classdef ABRViewerList < ABRViewerBase
                 'position', [0.05 0.18 0.9 0.76], 'tag', 'list', ...
                 'callback', @(src,evt)self.listbox_callback(src, evt), 'min', 0, 'max', 1);
             self.overlay_handle = uicontrol(self.figure_handle, 'style', 'checkbox', 'units', 'normalized', ...
-                'position', [0.3 0.13 0.5 0.05], 'tag', 'overlay', ...
+                'position', [0.05 0.13 0.5 0.05], 'tag', 'overlay', ...
                 'callback', @(src,evt)self.overlay_callback(src, evt), ...
                 'String', 'select for comparison', 'Value', 0);
             self.previous_handle = uicontrol(self.figure_handle, 'style', 'pushbutton', 'units', 'normalized', ...
@@ -86,6 +88,14 @@ classdef ABRViewerList < ABRViewerBase
             self.average_handle = uicontrol(self.figure_handle, 'style', 'togglebutton', 'units', 'normalized', ...
                 'position', [0.5125 0.08 0.1875 0.045], 'tag', 'average', 'string', 'average', ...
                 'callback', @(src,evt)self.average_callback(src, evt));
+            self.merge_handle = uicontrol(self.figure_handle, 'style', 'checkbox', 'units', 'normalized', ...
+                'position', [0.4 0.13 0.5 0.05], 'tag', 'overlay', ...
+                'callback', @(src,evt)self.merge_callback(src, evt), ...
+                'String', 'select for merge', 'Value', 0);
+            self.mergebtn_handle = uicontrol(self.figure_handle, 'style', 'pushbutton', 'units', 'normalized', ...
+                'position', [0.7 0.13 0.25 0.05], 'tag', 'overlay', ...
+                'callback', @(src,evt)self.mergebtn_callback(src, evt), ...
+                'String', 'merge/split', 'Value', 0, 'Enable', 'off');
         end
     end
     
@@ -148,7 +158,11 @@ classdef ABRViewerList < ABRViewerBase
         function file_names = get_current_files(self)
             positions = self.get_current_positions;
             file_list = self.get_file_list;
-            file_names = file_list(positions);
+            if all(positions > 0) && all(positions <= length(file_list))
+                file_names = file_list(positions);
+            else
+                file_names = {};
+            end
         end
         
         function file_list = get_file_list(self)
@@ -380,8 +394,47 @@ classdef ABRViewerList < ABRViewerBase
                     return
             end
         end
+    
+        function merge_callback(self, source, event)
+            set(self.listbox_handle, 'Min', 0);
+            if get(self.merge_handle, 'Value') == 1
+                set([self.overlay_handle 
+                     self.previous_handle 
+                     self.next_handle 
+                     self.print_handle 
+                     self.export_handle 
+                     self.print_thr_handle  
+                     self.average_handle], 'Enable', 'off');
+                self.inhibit_update = true;
+                set(self.mergebtn_handle, 'Enable', 'on');
+                set(self.listbox_handle, 'Max', 2);
+                set(self.listbox_handle, 'Callback', @(src,evt)self.listbox_callback(src, evt));
+            else
+                set(self.listbox_handle, 'Value', self.main_entry);
+                set(self.listbox_handle, 'Min', 0);
+                set(self.listbox_handle, 'Max', 1);
+                set(self.listbox_handle, 'Callback', @(src,evt)self.listbox_callback(src, evt));
+                self.inhibit_update = false;
+                set([self.overlay_handle 
+                     self.previous_handle 
+                     self.next_handle 
+                     self.print_handle 
+                     self.export_handle 
+                     self.print_thr_handle  
+                     self.average_handle], 'Enable', 'on');
+                set(self.mergebtn_handle, 'Enable', 'off');
+            end
+        end
+        
+        function mergebtn_callback(self, source, event)
+            file_list = self.get_current_files;
+            file_list = regexprep(file_list, '.*::', '');
+            file_list = fullfile(self.get_path_name, file_list);
+            mergeABRmat(file_list, 'save', true, 'split', true);
+        end
+        
         
     end
-    
+
 end
 
