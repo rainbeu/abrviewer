@@ -430,7 +430,12 @@ classdef ABRViewerList < ABRViewerBase
             file_list = self.get_current_files;
             file_list = regexprep(file_list, '.*::', '');
             file_list = fullfile(self.get_path_name, file_list);
-            mergeABRmat(file_list, 'save', true, 'split', true);
+            try
+                [~, fn] = mergeABRmat(file_list, 'save', true, 'split', true);
+                msgbox(sprintf('Success: %s\n', fn{:}), 'Merging/splitting', 'help', 'modal');
+            catch exc
+                msgbox(sprintf('Error: %s', exc.message), 'Error while merging/splitting', 'error', 'modal');
+            end
         end
         
         

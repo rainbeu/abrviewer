@@ -1,4 +1,4 @@
-function merged = mergeABRmat(files, varargin)
+function [varargout] = mergeABRmat(files, varargin)
     
     files = string(files);
     splitsides = false;
@@ -103,5 +103,17 @@ function merged = mergeABRmat(files, varargin)
             savename = regexprep(savename, '[0-5][0-9]-[0-5][0-9]\.mat', '-----.mat');
             s = merged(k);
             save(savename, '-struct', 's');
+            savename_list{k} = savename;
         end
     end
+
+    if nargout > 0
+        varargout{1} = merged;
+    end
+        
+    if nargout > 1
+        varargout{2} = savename_list;
+    end
+
+    
+
