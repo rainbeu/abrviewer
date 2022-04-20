@@ -24,7 +24,28 @@ function merged = mergeABRmat(files, varargin)
         for n = 1:length(fn)
             raw(k).(fn{n}) = tmp.(fn{n});
         end
-        L{k} = raw(k).St.ILD;
+        switch raw(k).St.PresentationType
+            case 'L/R/B'
+                L{k} = raw(k).St.Level + raw(k).St.ILD;
+            case 'simple binaural'
+                L{k} = raw(k).St.Level + raw(k).St.StimulusLevelOffsets;
+                % remove unused last entries in Avg and Mic
+                n = numel(raw(k).St.StimulusLevelOffsets);
+                if size(raw(k).Avg, 2) > n
+                    raw(k).Avg = raw(k).Avg(:, 1:n);
+                    raw(k).AvgC = raw(k).AvgC(1:n);
+                    raw(k).Mic = raw(k).Mic(:, :, 1:n);
+                    raw(k).MicC = raw(k).MicC(1:n);
+                end
+                % add dimension in order to match L/R/B pattern, remove later
+                raw(k).Avg = permute(raw(k).Avg, [1 3 2]);
+                raw(k).AvgC = permute(raw(k).AvgC, [2 1]);
+                raw(k).Mic = permute(raw(k).Mic, [1 2 4 3]);
+                raw(k).MicC = permute(raw(k).MicC, [2 1]);
+            case 'otherwise'
+                error('unknown presentation type %s', raw(k).St.PresentationType);
+        end
+        raw(k).Levels = L{k};
     end
     
     allLevels = cat(2, L{:});
@@ -32,13 +53,14 @@ function merged = mergeABRmat(files, varargin)
         error('some levels occur more than once, cannot merge simply');
     end
     allLevels = unique(allLevels);
+    numLevels = numel(allLevels);
     
     merged = raw(1);
     merged.St.ILD = allLevels(:).';
     
     for k = 1:length(raw)
-        for n = 1:length(raw(k).St.ILD)
-            idx = find(allLevels == raw(k).St.ILD(n));
+        for n = 1:length(raw(k).Levels)
+            idx = find(allLevels == raw(k).Levels(n));
             merged.Avg(:, :, idx)    = raw(k).Avg(:, :, n);
             merged.AvgC(:, idx)      = raw(k).AvgC(:, n);
             merged.Mic(:, :, :, idx) = raw(k).Mic(:, :, :, n);
@@ -54,21 +76,27 @@ function merged = mergeABRmat(files, varargin)
             merged(k).Mic  = squeeze(merged(k).Mic(:, :, k, :));
             merged(k).MicC = squeeze(merged(k).MicC(k, :));
             merged(k).St.PresentationType = 'simple binaural';
-            merged(k).St.StimulusSide = sides{k};
+            if strcmp(raw(1).St.PresentationType, 'L/R/B')
+                merged(k).St.StimulusSide = sides{k};
+            end
             merged(k).St.StimulusLevelOffsets = merged(k).St.ILD;
         end
     end
     
     if savefiles
         for k = 1:length(merged)
-            if splitsides
-                tag = tags{k};
+            if strcmp(raw(1).St.PresentationType, 'L/R/B')
+                if splitsides
+                    tag = tags{k};
+                else
+                    tag = 'LRB_';
+                end
             else
-                tag = 'LRB_';
+                tag = '';
             end
             savename = regexprep(files{1}, '[0-9]+-[0-9]+dB', ...
                          sprintf('%s%1.0f-%1.0fdB', tag, min(allLevels), max(allLevels)));
-            if strcmp(savename, files{1})
+            if strcmp(savename, files{1}) && length(raw) > 1
                 savename = regexprep(files{1}, '\.mat', ...
                          sprintf('_%s%1.0f-%1.0fdB.mat', tag, min(allLevels), max(allLevels)));
             end
