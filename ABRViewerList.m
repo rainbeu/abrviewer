@@ -182,7 +182,7 @@ classdef ABRViewerList < ABRViewerBase
             positions = self.get_current_positions;
             for idx = 1:length(positions)
                 pos = positions(idx);
-                if pos > length(self.data)
+                if pos > length(self.data) || self.data(pos).is_multi_data
                     try
                         self.data(pos) = ABRData(fullfile(self.get_path_name, file_list{idx}));
                     catch exc

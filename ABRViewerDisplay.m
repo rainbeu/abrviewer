@@ -506,7 +506,12 @@ classdef ABRViewerDisplay < ABRViewerBase
                 'ylim', [0 +1]*max(self.offsets)+[-1.5 1.5].*max(abs(main_data.get_data_limits)), ...
                 'xgrid', 'on', 'ygrid', 'on');
             [~, file_name_only] = fileparts(main_data.file_name);
-            title(self.axes_handle, file_name_only, 'interpreter', 'none');
+            if ~isempty(main_data.multi_parameter)
+                title_text = sprintf('%s (%s)', file_name_only, main_data.multi_parameter);
+            else
+                title_text = file_name_only;
+            end
+            title(self.axes_handle, title_text, 'interpreter', 'none');
             line(bsxfun(@plus, [-1;-1], -0.05*(0:length(self.offsets)-1)), bsxfun(@plus, [0;1], self.offsets), ...
                 'color', 'k', 'linewidth', 2, 'parent', self.axes_handle);
             line([-2;12], reshape([-1;-1;1;1]*main_data.get_noise_confidence_int+repmat(self.offsets,4,1),2,[]), ...

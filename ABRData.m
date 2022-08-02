@@ -20,11 +20,13 @@ classdef ABRData < ExperimentalData
         fs
         filtered_data
         is_switched
+        multi_parameter = []
     end
     
     properties (Access = protected)
         polarity_switched = false
         filter_updated = true
+        UCL_index = []
     end
     
     properties (Access = public)
@@ -183,6 +185,10 @@ classdef ABRData < ExperimentalData
             polarity_is_switched = self.is_switched;
         end
         
+        function is_multi = is_multi_data(self)
+            is_multi = ~isempty(self.UCL_index);
+        end
+        
         function import_from_file(self, file_path)
             
             % check basics
@@ -191,6 +197,22 @@ classdef ABRData < ExperimentalData
             rawdata = load(file_path);
             
             assert(isstruct(rawdata), 'no data found in data file %s!', file_path);
+            
+            self.UCL_index = [];
+            
+            if isfield(rawdata, 'Avg')
+                try
+                    self.import_from_OnlineABRdata(rawdata, file_path);
+                catch exc
+                    rethrow(exc)
+                end
+            elseif isfield(rawdata, 'data')
+                self.import_from_UCLdata(rawdata, file_path);
+            end
+            
+        end
+        
+        function import_from_OnlineABRdata(self, rawdata, file_path)
             assert(all(isfield(rawdata, {'St', 'Avg', 'Mic'})), 'data not valid in data file %s!', file_path);
             if ~isfield(rawdata.St, {'PresentationType'}) || strcmp(rawdata.St.PresentationType, 'L/R/B') 
                 if isempty(self.data_index) || self.data_index == 0 % ok if data index is specified, otherwise need to loop over indices
@@ -275,6 +297,132 @@ classdef ABRData < ExperimentalData
             else
                 self.current_thr = [];
             end
+        end
+        
+        function import_from_UCLdata(self, rawdata, file_path)
+            assert(isfield(rawdata, {'data'})&&all(isfield(rawdata.data, {'Info','Traces'})), ...
+                'data not valid in data file %s!', file_path);
+            T = rawdata.data.Traces;
+            T = T([T.Type]=="T");
+            f = unique([T.MainStimFreq]);
+            
+            freq = selectfreq(f);
+            
+            self.UCL_index = find(f==freq);
+            self.multi_parameter = sprintf("%1.0f Hz", freq);
+            
+            T = T([T.MainStimFreq] == freq);
+            
+            self.parameters = [T.MainStimLevel];
+            self.fs = 1/unique([T.SampleDur]*1e-3);
+            self.ABR = cat(1,T.TraceData).';
+            self.Mic = zeros(size(self.ABR));
+            
+           	if isfield(rawdata, 'wave_amp') && ~iscell(rawdata.wave_amp)
+                rawdata = rmfield(rawdata, 'wave_amp');
+            end
+           	if isfield(rawdata, 'wave_lat') && ~iscell(rawdata.wave_lat)
+                rawdata = rmfield(rawdata, 'wave_lat');
+            end
+           	if isfield(rawdata, 'abr_thr') && ~iscell(rawdata.abr_thr)
+                rawdata = rmfield(rawdata, 'abr_thr');
+            end
+           	if isfield(rawdata, 'is_switched') && ~iscell(rawdata.is_switched)
+                rawdata = rmfield(rawdata, 'is_switched');
+            end
+            
+            % optional (pre-analysed) data
+            if isfield(rawdata, 'wave_amp') && length(rawdata.wave_amp) >= self.UCL_index
+                self.wave_amp = rawdata.wave_amp{self.UCL_index};
+                self.wave_lat = rawdata.wave_lat{self.UCL_index};
+            else
+                self.wave_amp = nan(size(self.ABR, 2), self.number_of_wave_peaks, 2);
+                self.wave_lat = nan(size(self.ABR, 2), self.number_of_wave_peaks, 2);
+            end
+            % cut wave form data array to expected size
+            self.wave_amp(size(self.ABR, 2)+1:end, :, :) = [];
+            self.wave_amp(:, self.number_of_wave_peaks+1:end, :) = [];
+            self.wave_lat(size(self.ABR, 2)+1:end, :, :) = [];
+            self.wave_lat(:, self.number_of_wave_peaks+1:end, :) = [];
+            
+            % extend waveform data array to expected size, if necessary
+            self.wave_amp(:, :, end+1:2) = NaN;
+            self.wave_amp(end+1:size(self.ABR, 2), :, 1:2) = NaN;
+            self.wave_amp(:, end+1:self.number_of_wave_peaks, 1:2) = NaN;
+            self.wave_lat(:, :, end+1:2) = NaN;
+            self.wave_lat(end+1:size(self.ABR, 2), :, :) = NaN;
+            self.wave_lat(:, end+1:self.number_of_wave_peaks, :) = NaN;
+            
+            if isfield(rawdata, 'filter_limits')
+                self.filter_limits = rawdata.filter_limits;
+            else
+                self.filter_limits = [300 3000];
+            end
+            
+            % processed
+            self.time = (0:size(self.ABR, 1)-1).'/self.fs;
+            
+            self.ABR = self.ABR(self.time < 10e-3, :);
+            self.time = self.time(self.time < 10e-3, :);
+            
+            self.set_data_valid(file_path);
+            self.is_switched = false;
+            if isfield(rawdata, 'is_switched') && length(rawdata.is_switched) >= self.UCL_index
+                if rawdata.is_switched{self.UCL_index}
+                    %                     fprintf('DEBUG: data needs switching\n');
+                else
+                    %                     fprintf('DEBUG: data doesn''t need switching\n');
+                end
+                self.set_polarity(rawdata.is_switched{self.UCL_index});
+                self.is_switched = rawdata.is_switched{self.UCL_index};
+            else
+                %                 fprintf('DEBUG: data was never switched\n');
+            end
+            
+            if isfield(rawdata, 'abr_thr') && length(rawdata.abr_thr) >= self.UCL_index
+                self.current_thr = rawdata.abr_thr{self.UCL_index};
+            else
+                self.current_thr = [];
+            end
+            
+            
+            function freq = selectfreq(f)
+                
+                units = get(0, 'Units');
+                set(0, 'Units', 'characters');
+                mpos = get(0, 'MonitorPositions');
+                set(0, 'Units', units);
+                mpos = mpos(1,:);
+                
+                w = 20;
+                h = length(f)+9;
+                
+                hd = dialog('Units','characters',...
+                    'Position', [mpos(1)+(mpos(3)-w)/2 mpos(2)+(mpos(4)-h)/2 w h], ...
+                    'WindowStyle', 'modal', ...
+                    'Name', 'Select');
+                ht = uicontrol('Parent', hd, ...
+                    'Style', 'text', ...
+                    'Units', 'characters', ...
+                    'Position', [1 h-2 w-2 2], ...
+                    'String', 'Please select stimulus frequency');
+                hl = uicontrol('Parent', hd, ...
+                    'Style', 'listbox', ...
+                    'Units', 'characters', ...
+                    'Position', [2 4 w-4 h-7], ...
+                    'String', strtrim(string(num2str(f(:)))));
+                hb = uicontrol('Parent', hd, ...
+                    'Style', 'pushbutton', ...
+                    'Units', 'characters', ...
+                    'Position', [3 1 w-6 2], ...
+                    'String', 'Select', ...
+                    'Callback', @(s,e)uiresume(hd));
+                
+                uiwait(hd);
+                freq = f(hl.Value);
+                delete(hd)
+                
+            end
             
         end
         
@@ -283,13 +431,31 @@ classdef ABRData < ExperimentalData
             % additional fields
             rawdata = load(self.file_name);
             
-            rawdata.wave_amp = self.wave_amp;
-            rawdata.wave_lat = self.wave_lat;
-            rawdata.abr_thr = self.current_thr;
+            if isempty(self.UCL_index)
+                rawdata.wave_amp = self.wave_amp;
+                rawdata.wave_lat = self.wave_lat;
+                rawdata.abr_thr = self.current_thr;
+                rawdata.is_switched = self.is_switched;
+            else
+                if isfield(rawdata, 'wave_amp') && ~iscell(rawdata.wave_amp)
+                    rawdata = rmfield(rawdata, 'wave_amp');
+                end
+                if isfield(rawdata, 'wave_lat') && ~iscell(rawdata.wave_lat)
+                    rawdata = rmfield(rawdata, 'wave_lat');
+                end
+                if isfield(rawdata, 'abr_thr') && ~iscell(rawdata.abr_thr)
+                    rawdata = rmfield(rawdata, 'abr_thr');
+                end
+                if isfield(rawdata, 'is_switched') && ~iscell(rawdata.is_switched)
+                    rawdata = rmfield(rawdata, 'is_switched');
+                end                
+                rawdata.wave_amp{self.UCL_index} = self.wave_amp;
+                rawdata.wave_lat{self.UCL_index} = self.wave_lat;
+                rawdata.abr_thr{self.UCL_index} = self.current_thr;
+                rawdata.is_switched{self.UCL_index} = self.is_switched;
+            end
             
             rawdata.filter_limits = self.filter_limits;
-            
-            rawdata.is_switched = self.is_switched;
             
             % load full data structure to file (with fields as variables)
             save(self.file_name, '-struct', 'rawdata');
