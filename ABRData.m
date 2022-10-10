@@ -304,6 +304,7 @@ classdef ABRData < ExperimentalData
                 'data not valid in data file %s!', file_path);
             T = rawdata.data.Traces;
             T = T([T.Type]=="T");
+            T = T([T.MainStimFreq].*[T.SampleDur]*1e-3 < 0.5);
             f = unique([T.MainStimFreq]);
             
             freq = selectfreq(f);
